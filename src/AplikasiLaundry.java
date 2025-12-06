@@ -89,17 +89,25 @@ public class AplikasiLaundry extends JFrame {
         frameReg.setLayout(null);
         frameReg.setLocationRelativeTo(null);
         frameReg.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        
+
         JLabel lblJudul = new JLabel("DAFTAR BARU");
         lblJudul.setFont(new Font("Arial", Font.BOLD, 24));
         lblJudul.setBounds(0, 40, 600, 40);
         lblJudul.setHorizontalAlignment(SwingConstants.CENTER);
         frameReg.add(lblJudul);
 
-        JTextField txtUser = new JTextField(); 
+        JLabel lblUser = new JLabel("Username :");
+        lblUser.setBounds(80, 110, 120, 30);
+        frameReg.add(lblUser);
+
+        JTextField txtUser = new JTextField();
         txtUser.setBounds(200, 110, 200, 30);
         frameReg.add(txtUser);
-        
+
+        JLabel lblPass = new JLabel("Password :");
+        lblPass.setBounds(80, 160, 120, 30);
+        frameReg.add(lblPass);
+
         JPasswordField txtPass = new JPasswordField();
         txtPass.setBounds(200, 160, 200, 30);
         frameReg.add(txtPass);
@@ -108,14 +116,26 @@ public class AplikasiLaundry extends JFrame {
         btnDaftar.setBounds(200, 220, 200, 40);
         frameReg.add(btnDaftar);
 
+        JButton btnKembali = new JButton("Batal");
+        btnKembali.setBounds(200, 270, 200, 30);
+        frameReg.add(btnKembali);
+
         btnDaftar.addActionListener(e -> {
-            // Update data
+            if (txtUser.getText().isEmpty() || new String(txtPass.getPassword()).isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Isi dulu username dan passwordnya!");
+                return;
+            }
             UserSession.daftarBaru(txtUser.getText(), new String(txtPass.getPassword()));
             JOptionPane.showMessageDialog(null, "Akun dibuat! Silakan Login.");
             frameReg.dispose();
             tampilkanLayarLogin();
         });
-        
+
+        btnKembali.addActionListener(e -> {
+            frameReg.dispose();
+            tampilkanLayarLogin();
+        });
+
         frameReg.setVisible(true);
     }
 
