@@ -8,9 +8,9 @@ public class UserSession {
         return user.equals(username) && pass.equals(password);
     }
    
-    public static void daftarBaru(String username, String password) {
-        this.username = username;
-        this.password = password;
+    public static void daftarBaru(String u, String p) {
+        username = u;
+        password = p;
     }
     public static String getUsername() {
         return username;
