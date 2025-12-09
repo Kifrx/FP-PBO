@@ -38,7 +38,7 @@ Aplikasi desktop untuk manajemen laundry dengan fitur lengkap menggunakan Java S
 ### 1. Clone atau Download Project
 
 ```bash
-git clone
+git clone https://github.com/Kifrx/FP-PBO.git
 cd FP-PBO
 ```
 
