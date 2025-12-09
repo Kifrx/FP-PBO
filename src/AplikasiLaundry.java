@@ -380,6 +380,12 @@ public class AplikasiLaundry extends JFrame {
                 );
                 transaksi.setStatus(comboStatus.getSelectedItem().toString());
                 
+                // Set estimasi selesai dari data layanan database
+                LocalDate estimasi = (LocalDate) labelEstimasi.getClientProperty("estimasi");
+                if (estimasi != null) {
+                    transaksi.setEstimasiSelesai(estimasi);
+                }
+                
                 transaksiDAO.insertTransaksi(transaksi, UserSession.getUsername());
                 loadTransaksiData(); // Reload dari database
                 reset();
@@ -407,6 +413,12 @@ public class AplikasiLaundry extends JFrame {
                     transaksi.setBerat(berat);
                     transaksi.setTotalHarga(hasil);
                     transaksi.setStatus(comboStatus.getSelectedItem().toString());
+                    
+                    // Set estimasi selesai dari data layanan database
+                    LocalDate estimasi = (LocalDate) labelEstimasi.getClientProperty("estimasi");
+                    if (estimasi != null) {
+                        transaksi.setEstimasiSelesai(estimasi);
+                    }
 
                     transaksiDAO.updateTransaksi(transaksi, UserSession.getUsername());
                     loadTransaksiData(); // Reload dari database
@@ -696,6 +708,7 @@ public class AplikasiLaundry extends JFrame {
     private JPanel createUserListPanel() {
         JPanel panel = new JPanel();
         panel.setLayout(null);
+        panel.setPreferredSize(new Dimension(750, 450));
 
         // Form Input
         JLabel lblUsername = new JLabel("Username:");
@@ -799,9 +812,10 @@ public class AplikasiLaundry extends JFrame {
     private JPanel createRequestListPanel() {
         JPanel panel = new JPanel();
         panel.setLayout(null);
+        panel.setPreferredSize(new Dimension(750, 450));
 
         JLabel lblInfo = new JLabel("Daftar Request Access dari Calon User");
-        lblInfo.setBounds(30, 10, 400, 25);
+        lblInfo.setBounds(10, 10, 400, 25);
         lblInfo.setFont(new Font("Arial", Font.BOLD, 14));
         panel.add(lblInfo);
 
@@ -814,15 +828,16 @@ public class AplikasiLaundry extends JFrame {
             }
         };
         JTable tabelRequest = new JTable(modelRequest);
+        tabelRequest.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         tabelRequest.getColumnModel().getColumn(0).setPreferredWidth(30);
         tabelRequest.getColumnModel().getColumn(3).setPreferredWidth(200);
         JScrollPane scrollRequest = new JScrollPane(tabelRequest);
-        scrollRequest.setBounds(30, 45, 680, 250);
+        scrollRequest.setBounds(10, 45, 700, 200);
         panel.add(scrollRequest);
 
         // Detail Request
         JLabel lblDetail = new JLabel("Detail Request:");
-        lblDetail.setBounds(30, 310, 150, 25);
+        lblDetail.setBounds(10, 255, 150, 25);
         lblDetail.setFont(new Font("Arial", Font.BOLD, 12));
         panel.add(lblDetail);
 
@@ -830,20 +845,23 @@ public class AplikasiLaundry extends JFrame {
         txtDetail.setEditable(false);
         txtDetail.setLineWrap(true);
         txtDetail.setWrapStyleWord(true);
+        txtDetail.setFont(new Font("Arial", Font.PLAIN, 11));
         JScrollPane scrollDetail = new JScrollPane(txtDetail);
-        scrollDetail.setBounds(30, 340, 480, 60);
+        scrollDetail.setBounds(10, 285, 530, 100);
         panel.add(scrollDetail);
 
         JButton btnApprove = new JButton("✓ Approve");
-        btnApprove.setBounds(530, 340, 120, 35);
+        btnApprove.setBounds(560, 285, 130, 40);
         btnApprove.setBackground(new Color(40, 167, 69));
         btnApprove.setForeground(Color.WHITE);
+        btnApprove.setFont(new Font("Arial", Font.BOLD, 12));
         panel.add(btnApprove);
 
         JButton btnDecline = new JButton("✗ Decline");
-        btnDecline.setBounds(530, 380, 120, 35);
+        btnDecline.setBounds(560, 335, 130, 40);
         btnDecline.setBackground(new Color(220, 53, 69));
         btnDecline.setForeground(Color.WHITE);
+        btnDecline.setFont(new Font("Arial", Font.BOLD, 12));
         panel.add(btnDecline);
 
         // Load data request

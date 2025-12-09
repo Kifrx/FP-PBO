@@ -8,7 +8,12 @@ import java.sql.SQLException;
 public class DatabaseConnection {
     
     // Konfigurasi database
-    private static final String DB_URL = "jdbc:mysql://localhost:3306/laundry_system";
+    private static final String DB_URL = "jdbc:mysql://localhost:3306/laundry_system?" +
+                                         "useSSL=false&" +
+                                         "serverTimezone=Asia/Jakarta&" +
+                                         "allowPublicKeyRetrieval=true&" +
+                                         "useUnicode=true&" +
+                                         "characterEncoding=UTF-8";
     private static final String DB_USER = "root";
     private static final String DB_PASSWORD = "";
     

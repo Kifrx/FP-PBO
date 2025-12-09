@@ -26,6 +26,10 @@ public class AccessRequest {
         return id;
     }
 
+    public void setId(int id) {
+        this.id = id;
+    }
+
     public String getUsername() {
         return username;
     }
@@ -44,6 +48,10 @@ public class AccessRequest {
 
     public LocalDateTime getTanggalRequest() {
         return tanggalRequest;
+    }
+
+    public void setTanggalRequest(LocalDateTime tanggalRequest) {
+        this.tanggalRequest = tanggalRequest;
     }
 
     public String getTanggalRequestFormatted() {

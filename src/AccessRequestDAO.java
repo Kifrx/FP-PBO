@@ -167,7 +167,10 @@ public class AccessRequestDAO {
             rs.getString("alasan")
         );
         
+        // Override dengan data dari database
+        request.setId(rs.getInt("id"));
         request.setStatus(rs.getString("status"));
+        request.setTanggalRequest(rs.getTimestamp("tanggal_request").toLocalDateTime());
         
         return request;
     }

@@ -25,22 +25,9 @@ public class Transaksi {
         this.totalHarga = totalHarga;
         this.status = "BELUM";
         this.tanggalMasuk = LocalDateTime.now();
-        this.estimasiSelesai = LocalDate.now().plusDays(getEstimasiHari());
+        // Estimasi selesai akan di-set dari database menggunakan setter
+        this.estimasiSelesai = LocalDate.now(); // Default value
         this.namaPetugas = ""; // Will be set from database or manually
-    }
-
-    private int getEstimasiHari() {
-        // Estimasi berdasarkan layanan
-        switch (layanan) {
-            case "Cuci + Setrika":
-                return 2; // 2 hari
-            case "Cuci Kering":
-                return 1; // 1 hari
-            case "Setrika Saja":
-                return 1; // 1 hari
-            default:
-                return 2;
-        }
     }
 
     // Getters and Setters
@@ -74,8 +61,7 @@ public class Transaksi {
 
     public void setLayanan(String layanan) {
         this.layanan = layanan;
-        // Update estimasi jika layanan berubah
-        this.estimasiSelesai = this.tanggalMasuk.toLocalDate().plusDays(getEstimasiHari());
+        // Estimasi akan di-update berdasarkan data layanan dari database
     }
 
     public int getBerat() {
