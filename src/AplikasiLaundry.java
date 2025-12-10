@@ -1,1169 +1,1201 @@
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.awt.event.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 
 public class AplikasiLaundry extends JFrame {
 
-    JTextField textNama, textNoHP, textBerat;
-    JComboBox<LayananItem> comboLayanan;
-    JComboBox<String> comboStatus;
-    JLabel labelTotalHarga, labelTotalPendapatan, labelHeaderGambar, labelRoleInfo, labelEstimasi;
-    JTable tabelData;
-    DefaultTableModel modelTabel;
-    TransaksiDAO transaksiDAO = new TransaksiDAO();
-    AccessRequestDAO accessRequestDAO = new AccessRequestDAO();
-    UserDAO userDAO = new UserDAO();
+    private JPanel mainContainer;
+    private CardLayout cardLayout;
+
+    private DashboardPanel dashboardPanel;
+    private LoginPanel loginPanel;
+    private RequestAccessPanel requestAccessPanel;
+    private ManageUserPanel manageUserPanel;
+    private EditLayananPanel editLayananPanel;
+    private LaporanPanel laporanPanel;
+
+    private TransaksiDAO transaksiDAO = new TransaksiDAO();
+    private AccessRequestDAO accessRequestDAO = new AccessRequestDAO();
+    private UserDAO userDAO = new UserDAO();
+
+    private final String PAGE_LOGIN = "LOGIN";
+    private final String PAGE_REQUEST = "REQUEST";
+    private final String PAGE_MENU = "MENU";
+    private final String PAGE_DASHBOARD = "DASHBOARD";
+    private final String PAGE_LAPORAN = "LAPORAN";
+    private final String PAGE_MANAGE_USER = "MANAGE_USER";
+    private final String PAGE_EDIT_LAYANAN = "EDIT_LAYANAN";
+
+    public static final Color COLOR_PRIMARY = new Color(74, 109, 140);
+    public static final Color COLOR_BG_LIGHT = new Color(225, 235, 240);
+    public static final Color COLOR_INPUT = new Color(238, 242, 245);
+    public static final Color COLOR_TEXT = new Color(60, 60, 60);
+
+    public static final Color COLOR_RED = new Color(220, 53, 69);
+    public static final Color COLOR_YELLOW = new Color(255, 193, 7);
+    public static final Color COLOR_GREEN = new Color(40, 167, 69);
 
     public static void main(String[] args) {
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception ignored) {
+        }
         SwingUtilities.invokeLater(() -> new AplikasiLaundry());
     }
 
-
     public AplikasiLaundry() {
-        tampilkanLayarLogin();
-    }
-
-    //Login view
-    private void tampilkanLayarLogin() {
-        JFrame frameLogin = new JFrame("Login Sistem Laundry");
-        frameLogin.setSize(600, 400); 
-        frameLogin.setLayout(null);
-        frameLogin.setLocationRelativeTo(null);
-        frameLogin.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frameLogin.getContentPane().setBackground(new Color(230, 240, 255));
-
-        JLabel lblJudul = new JLabel("LOGIN APLIKASI");
-        lblJudul.setFont(new Font("Arial", Font.BOLD, 24));
-        lblJudul.setBounds(0, 50, 600, 40);
-        lblJudul.setHorizontalAlignment(SwingConstants.CENTER);
-        frameLogin.add(lblJudul);
-
-        JLabel lblUser = new JLabel("Username:");
-        lblUser.setBounds(150, 120, 100, 30);
-        frameLogin.add(lblUser);
-        JTextField txtUser = new JTextField();
-        txtUser.setBounds(250, 120, 200, 30);
-        frameLogin.add(txtUser);
-
-        JLabel lblPass = new JLabel("Password:");
-        lblPass.setBounds(150, 170, 100, 30);
-        frameLogin.add(lblPass);
-        JPasswordField txtPass = new JPasswordField();
-        txtPass.setBounds(250, 170, 200, 30);
-        frameLogin.add(txtPass);
-
-        JButton btnLogin = new JButton("MASUK");
-        btnLogin.setBounds(250, 220, 200, 40);
-        btnLogin.setBackground(Color.BLUE);
-        btnLogin.setForeground(Color.WHITE);
-        frameLogin.add(btnLogin);
-
-        JLabel lblReg = new JLabel("Belum punya akun? Request Access disini");
-        lblReg.setBounds(0, 280, 600, 30);
-        lblReg.setHorizontalAlignment(SwingConstants.CENTER);
-        lblReg.setForeground(Color.BLUE);
-        lblReg.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        frameLogin.add(lblReg);
-
-        // LOGIC LOGIN
-        btnLogin.addActionListener(e -> {
-            if (UserSession.cekLogin(txtUser.getText(), new String(txtPass.getPassword()))) {
-                frameLogin.dispose();
-                tampilkanDashboard();
-            } else {
-                JOptionPane.showMessageDialog(null, "Salah woy!");
-            }
-        });
-
-        lblReg.addMouseListener(new MouseAdapter() {
-            public void mouseClicked(MouseEvent e) {
-                frameLogin.dispose();
-                tampilkanLayarRequestAccess();
-            }
-        });
-
-        frameLogin.setVisible(true);
-    }
-
-    //Request Access view
-    private void tampilkanLayarRequestAccess() {
-        JFrame frameReg = new JFrame("Request Access");
-        frameReg.setSize(600, 500);
-        frameReg.setLayout(null);
-        frameReg.setLocationRelativeTo(null);
-        frameReg.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-        JLabel lblJudul = new JLabel("REQUEST ACCESS");
-        lblJudul.setFont(new Font("Arial", Font.BOLD, 24));
-        lblJudul.setBounds(0, 40, 600, 40);
-        lblJudul.setHorizontalAlignment(SwingConstants.CENTER);
-        frameReg.add(lblJudul);
-
-        JLabel lblInfo = new JLabel("Request Anda akan diverifikasi oleh Owner");
-        lblInfo.setFont(new Font("Arial", Font.ITALIC, 12));
-        lblInfo.setBounds(0, 80, 600, 20);
-        lblInfo.setHorizontalAlignment(SwingConstants.CENTER);
-        lblInfo.setForeground(Color.GRAY);
-        frameReg.add(lblInfo);
-
-        JLabel lblUser = new JLabel("Username :");
-        lblUser.setBounds(80, 110, 120, 30);
-        frameReg.add(lblUser);
-
-        JTextField txtUser = new JTextField();
-        txtUser.setBounds(200, 110, 200, 30);
-        frameReg.add(txtUser);
-
-        JLabel lblPass = new JLabel("Password :");
-        lblPass.setBounds(80, 160, 120, 30);
-        frameReg.add(lblPass);
-
-        JPasswordField txtPass = new JPasswordField();
-        txtPass.setBounds(200, 160, 200, 30);
-        frameReg.add(txtPass);
-
-        JLabel lblNama = new JLabel("Nama Lengkap :");
-        lblNama.setBounds(80, 210, 120, 30);
-        frameReg.add(lblNama);
-
-        JTextField txtNama = new JTextField();
-        txtNama.setBounds(200, 210, 200, 30);
-        frameReg.add(txtNama);
-
-        JLabel lblAlasan = new JLabel("Alasan Request :");
-        lblAlasan.setBounds(80, 250, 120, 30);
-        frameReg.add(lblAlasan);
-
-        JTextArea txtAlasan = new JTextArea();
-        txtAlasan.setLineWrap(true);
-        txtAlasan.setWrapStyleWord(true);
-        JScrollPane scrollAlasan = new JScrollPane(txtAlasan);
-        scrollAlasan.setBounds(200, 250, 200, 60);
-        frameReg.add(scrollAlasan);
-
-        JButton btnRequest = new JButton("KIRIM REQUEST");
-        btnRequest.setBounds(200, 330, 200, 40);
-        btnRequest.setBackground(new Color(0, 123, 255));
-        btnRequest.setForeground(Color.WHITE);
-        frameReg.add(btnRequest);
-
-        JButton btnKembali = new JButton("Batal");
-        btnKembali.setBounds(200, 380, 200, 30);
-        frameReg.add(btnKembali);
-
-        btnRequest.addActionListener(e -> {
-            if (txtUser.getText().isEmpty() || new String(txtPass.getPassword()).isEmpty() || 
-                txtNama.getText().isEmpty() || txtAlasan.getText().isEmpty()) {
-                JOptionPane.showMessageDialog(null, "Isi semua field!");
-                return;
-            }
-            
-            // Cek apakah username sudah ada
-            for (User u : UserSession.getAllUsers()) {
-                if (u.getUsername().equals(txtUser.getText())) {
-                    JOptionPane.showMessageDialog(null, "Username sudah digunakan!");
-                    return;
-                }
-            }
-            
-            // Cek apakah sudah pernah request dengan username yang sama
-            if (accessRequestDAO.isPendingRequestExists(txtUser.getText())) {
-                JOptionPane.showMessageDialog(null, "Request dengan username ini sudah ada dan menunggu approval!");
-                return;
-            }
-            
-            AccessRequest request = new AccessRequest(
-                txtUser.getText(),
-                new String(txtPass.getPassword()),
-                txtNama.getText(),
-                txtAlasan.getText()
-            );
-            accessRequestDAO.insertAccessRequest(request);
-            
-            JOptionPane.showMessageDialog(null, 
-                "Request berhasil dikirim!\nSilakan tunggu approval dari Owner.\n",
-                "Request Terkirim",
-                JOptionPane.INFORMATION_MESSAGE);
-            frameReg.dispose();
-            tampilkanLayarLogin();
-        });
-
-        btnKembali.addActionListener(e -> {
-            frameReg.dispose();
-            tampilkanLayarLogin();
-        });
-
-        frameReg.setVisible(true);
-    }
-
-    //Dashboard view
-    private void tampilkanDashboard() {
-        // Bersihkan semua komponen lama
-        getContentPane().removeAll();
-        
-        setTitle("Sistem Laundry - " + UserSession.getNamaLengkap() + " (" + UserSession.getRole() + ")");
-        setSize(1100, 750);
+        setTitle("Sistem Laundry");
+        setSize(950, 650);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(null);
         setLocationRelativeTo(null);
 
-        // Header Gambar
-        labelHeaderGambar = new JLabel("[ AREA GAMBAR LOGO ]");
-        labelHeaderGambar.setOpaque(true);
-        labelHeaderGambar.setBackground(Color.DARK_GRAY);
-        labelHeaderGambar.setForeground(Color.WHITE);
-        labelHeaderGambar.setHorizontalAlignment(SwingConstants.CENTER);
-        labelHeaderGambar.setBounds(0, 0, 1100, 120);
-        add(labelHeaderGambar);
+        cardLayout = new CardLayout();
+        mainContainer = new JPanel(cardLayout);
 
-        // Info Role & User
-        labelRoleInfo = new JLabel("Login: " + UserSession.getNamaLengkap() + " | Role: " + UserSession.getRole());
-        labelRoleInfo.setBounds(20, 130, 500, 25);
-        labelRoleInfo.setFont(new Font("Arial", Font.BOLD, 12));
-        add(labelRoleInfo);
+        dashboardPanel = new DashboardPanel();
+        loginPanel = new LoginPanel();
+        requestAccessPanel = new RequestAccessPanel();
+        manageUserPanel = new ManageUserPanel();
+        editLayananPanel = new EditLayananPanel();
+        laporanPanel = new LaporanPanel();
 
-        int y = 165;
+        mainContainer.add(loginPanel, PAGE_LOGIN);
+        mainContainer.add(requestAccessPanel, PAGE_REQUEST);
+        mainContainer.add(new MenuOperasiPanel(), PAGE_MENU);
+        mainContainer.add(dashboardPanel, PAGE_DASHBOARD);
+        mainContainer.add(laporanPanel, PAGE_LAPORAN);
+        mainContainer.add(manageUserPanel, PAGE_MANAGE_USER);
+        mainContainer.add(editLayananPanel, PAGE_EDIT_LAYANAN);
 
-        // Input Form
-        addLabel("Nama:", 30, y);
-        textNama = addInput(130, y, 200);
-        
-        addLabel("No HP:", 30, y+35);
-        textNoHP = addInput(130, y+35, 200);
-        
-        addLabel("Layanan:", 360, y);
-        comboLayanan = new JComboBox<>();
-        updateComboLayanan();
-        comboLayanan.setBounds(460, y, 180, 25);
-        add(comboLayanan);
-        
-        addLabel("Berat (kg):", 360, y+35);
-        textBerat = addInput(460, y+35, 100);
-
-        addLabel("Status:", 670, y);
-        String[] statusMenu = {"BELUM", "PROSES", "DONE"};
-        comboStatus = new JComboBox<>(statusMenu);
-        comboStatus.setBounds(770, y, 120, 25);
-        add(comboStatus);
-
-        labelEstimasi = new JLabel("Estimasi: -");
-        labelEstimasi.setBounds(670, y+35, 220, 25);
-        labelEstimasi.setFont(new Font("Arial", Font.ITALIC, 11));
-        add(labelEstimasi);
-
-        // Tombol Hitung
-        JButton btnHitung = new JButton("Hitung");
-        btnHitung.setBounds(460, y+75, 100, 25);
-        add(btnHitung);
-
-        labelTotalHarga = new JLabel("Rp 0");
-        labelTotalHarga.setBounds(570, y+75, 200, 25);
-        labelTotalHarga.setForeground(Color.BLUE);
-        labelTotalHarga.setFont(new Font("Arial", Font.BOLD, 14));
-        add(labelTotalHarga);
-
-        // Tombol CRUD
-        JButton btnSimpan = new JButton("Simpan");
-        btnSimpan.setBounds(30, y+120, 100, 35);
-        btnSimpan.setBackground(Color.GREEN);
-        add(btnSimpan);
-
-        JButton btnUpdate = new JButton("Update");
-        btnUpdate.setBounds(140, y+120, 100, 35);
-        btnUpdate.setBackground(Color.YELLOW);
-        add(btnUpdate);
-
-        JButton btnHapus = new JButton("Hapus");
-        btnHapus.setBounds(250, y+120, 100, 35);
-        btnHapus.setBackground(Color.RED);
-        btnHapus.setForeground(Color.WHITE);
-        add(btnHapus);
-
-        // Tombol Owner Only
-        JButton btnLaporan = new JButton("Laporan");
-        btnLaporan.setBounds(400, y+120, 100, 35);
-        btnLaporan.setBackground(new Color(0, 150, 200));
-        btnLaporan.setForeground(Color.WHITE);
-        btnLaporan.setEnabled(UserSession.isOwner());
-        add(btnLaporan);
-
-        JButton btnManageUser = new JButton("Kelola User");
-        btnManageUser.setBounds(510, y+120, 120, 35);
-        btnManageUser.setBackground(new Color(100, 50, 150));
-        btnManageUser.setForeground(Color.WHITE);
-        btnManageUser.setEnabled(UserSession.isOwner());
-        add(btnManageUser);
-        
-        // Update button text jika ada pending request
-        if (UserSession.isOwner()) {
-            int pendingCount = accessRequestDAO.getPendingRequestCount();
-            if (pendingCount > 0) {
-                btnManageUser.setText("Kelola User (" + pendingCount + ")");
-            }
-        }
-
-        JButton btnEditLayanan = new JButton("Edit Layanan");
-        btnEditLayanan.setBounds(640, y+120, 120, 35);
-        btnEditLayanan.setBackground(new Color(255, 140, 0));
-        btnEditLayanan.setForeground(Color.WHITE);
-        btnEditLayanan.setEnabled(UserSession.isOwner());
-        add(btnEditLayanan);
-
-        JButton btnLogout = new JButton("Logout");
-        btnLogout.setBounds(970, y+120, 100, 35);
-        add(btnLogout);
-
-        // Tabel
-        String[] col = {"ID", "Nama", "HP", "Layanan", "Berat", "Total", "Status", "Tgl Masuk", "Estimasi", "Petugas"};
-        modelTabel = new DefaultTableModel(col, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false; // Semua cell tidak bisa di-edit langsung
-            }
-        };
-        tabelData = new JTable(modelTabel);
-        tabelData.getColumnModel().getColumn(0).setPreferredWidth(30);
-        tabelData.getColumnModel().getColumn(1).setPreferredWidth(120);
-        tabelData.getColumnModel().getColumn(2).setPreferredWidth(90);
-        JScrollPane scroll = new JScrollPane(tabelData);
-        scroll.setBounds(30, y+170, 1040, 250);
-        add(scroll);
-
-        // Total Pendapatan
-        labelTotalPendapatan = new JLabel("Total Pendapatan: Rp 0");
-        labelTotalPendapatan.setBounds(30, y+430, 500, 30);
-        labelTotalPendapatan.setFont(new Font("Arial", Font.BOLD, 18));
-        add(labelTotalPendapatan);
-
-        btnHitung.addActionListener(e -> {
-            try {
-                int berat = Integer.parseInt(textBerat.getText());
-                LayananItem selectedLayanan = (LayananItem) comboLayanan.getSelectedItem();
-                
-                if (selectedLayanan == null) {
-                    JOptionPane.showMessageDialog(null, "Pilih layanan terlebih dahulu!");
-                    return;
-                }
-
-                int hasil = LayananManager.hitungHarga(selectedLayanan.getNama(), berat);
-                int estimasiHari = selectedLayanan.getEstimasiHari();
-                LocalDate estimasi = LocalDate.now().plusDays(estimasiHari);
-                
-                labelTotalHarga.setText("Rp " + hasil);
-                labelTotalHarga.putClientProperty("nilai", hasil);
-                labelEstimasi.setText("Estimasi: " + estimasi.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) + " (" + estimasiHari + " hari)");
-                labelEstimasi.putClientProperty("estimasi", estimasi);
-
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(null, "Berat harus angka!");
-            }
-        });
-
-        // Logika Simpan
-        btnSimpan.addActionListener(e -> {
-            if (validasi()) {
-                int berat = Integer.parseInt(textBerat.getText());
-                int harga = (Integer) labelTotalHarga.getClientProperty("nilai");
-                LayananItem selectedLayanan = (LayananItem) comboLayanan.getSelectedItem();
-                
-                Transaksi transaksi = new Transaksi(
-                    textNama.getText(),
-                    textNoHP.getText(),
-                    selectedLayanan.getNama(),
-                    berat,
-                    harga
-                );
-                transaksi.setStatus(comboStatus.getSelectedItem().toString());
-                
-                // Set estimasi selesai dari data layanan database
-                LocalDate estimasi = (LocalDate) labelEstimasi.getClientProperty("estimasi");
-                if (estimasi != null) {
-                    transaksi.setEstimasiSelesai(estimasi);
-                }
-                
-                transaksiDAO.insertTransaksi(transaksi, UserSession.getUsername());
-                loadTransaksiData(); // Reload dari database
-                reset();
-                JOptionPane.showMessageDialog(null, "Data berhasil disimpan!");
-            }
-        });
-        
-        // Logika Update
-        btnUpdate.addActionListener(e -> {
-            int row = tabelData.getSelectedRow();
-            if (row >= 0 && validasi()) {
-                int id = (Integer) modelTabel.getValueAt(row, 0);
-                Transaksi transaksi = findTransaksiById(id);
-                
-                if (transaksi != null) {
-                    int berat = Integer.parseInt(textBerat.getText());
-                    LayananItem selectedLayanan = (LayananItem) comboLayanan.getSelectedItem();
-                    String namaLayanan = selectedLayanan.getNama();
-                    
-                    int hasil = LayananManager.hitungHarga(namaLayanan, berat);
-                    
-                    transaksi.setNamaPelanggan(textNama.getText());
-                    transaksi.setNoHP(textNoHP.getText());
-                    transaksi.setLayanan(namaLayanan);
-                    transaksi.setBerat(berat);
-                    transaksi.setTotalHarga(hasil);
-                    transaksi.setStatus(comboStatus.getSelectedItem().toString());
-                    
-                    // Set estimasi selesai dari data layanan database
-                    LocalDate estimasi = (LocalDate) labelEstimasi.getClientProperty("estimasi");
-                    if (estimasi != null) {
-                        transaksi.setEstimasiSelesai(estimasi);
-                    }
-
-                    transaksiDAO.updateTransaksi(transaksi, UserSession.getUsername());
-                    loadTransaksiData(); // Reload dari database
-                    reset();
-                    JOptionPane.showMessageDialog(null, "Data berhasil diupdate!");
-                }
-            } else if (row < 0) {
-                JOptionPane.showMessageDialog(null, "Pilih data yang akan diupdate!");
-            }
-        });
-
-        // Logika Hapus
-        btnHapus.addActionListener(e -> {
-            int row = tabelData.getSelectedRow();
-            if (row >= 0) {
-                int confirm = JOptionPane.showConfirmDialog(null, "Yakin hapus data ini?", "Konfirmasi", JOptionPane.YES_NO_OPTION);
-                if (confirm == JOptionPane.YES_OPTION) {
-                    int id = (Integer) modelTabel.getValueAt(row, 0);
-                    transaksiDAO.deleteTransaksi(id);
-                    loadTransaksiData(); // Reload dari database
-                    JOptionPane.showMessageDialog(null, "Data berhasil dihapus!");
-                }
-            } else {
-                JOptionPane.showMessageDialog(null, "Pilih data yang akan dihapus!");
-            }
-        });
-        
-        // Logika Klik Tabel
-        tabelData.addMouseListener(new MouseAdapter() {
-            public void mouseClicked(MouseEvent e) {
-                int row = tabelData.getSelectedRow();
-                if(row >= 0) {
-                    int id = (Integer) modelTabel.getValueAt(row, 0);
-                    Transaksi transaksi = findTransaksiById(id);
-                    
-                    if (transaksi != null) {
-                        textNama.setText(transaksi.getNamaPelanggan());
-                        textNoHP.setText(transaksi.getNoHP());
-                        
-                        // Cari layanan by nama
-                        for (int i = 0; i < comboLayanan.getItemCount(); i++) {
-                            LayananItem item = comboLayanan.getItemAt(i);
-                            if (item.getNama().equals(transaksi.getLayanan())) {
-                                comboLayanan.setSelectedIndex(i);
-                                break;
-                            }
-                        }
-                        
-                        textBerat.setText(String.valueOf(transaksi.getBerat()));
-                        comboStatus.setSelectedItem(transaksi.getStatus());
-                        labelTotalHarga.setText("Rp " + transaksi.getTotalHarga());
-                        labelTotalHarga.putClientProperty("nilai", transaksi.getTotalHarga());
-                        labelEstimasi.setText("Estimasi: " + transaksi.getEstimasiSelesaiFormatted());
-                        labelEstimasi.putClientProperty("estimasi", transaksi.getEstimasiSelesai());
-                    }
-                }
-            }
-        });
-        
-        // Logika Laporan (Owner only)
-        btnLaporan.addActionListener(e -> {
-            if (UserSession.isOwner()) {
-                tampilkanLaporan();
-            }
-        });
-
-        // Logika Manage User (Owner only)
-        btnManageUser.addActionListener(e -> {
-            if (UserSession.isOwner()) {
-                tampilkanManageUser();
-            }
-        });
-
-        // Logika Edit Layanan (Owner only)
-        btnEditLayanan.addActionListener(e -> {
-            if (UserSession.isOwner()) {
-                tampilkanEditLayanan();
-            }
-        });
-
-        btnLogout.addActionListener(e -> {
-            UserSession.logout();
-            dispose();
-            tampilkanLayarLogin();
-        });
-
-        // Load data dari database
-        loadTransaksiData();
-
-        // Refresh UI
-        revalidate();
-        repaint();
+        add(mainContainer);
         setVisible(true);
     }
 
-    // Method untuk load data transaksi dari database
-    private void loadTransaksiData() {
-        List<Transaksi> allTransaksi = transaksiDAO.getAllTransaksi();
-        modelTabel.setRowCount(0); // Clear existing data
-        for (Transaksi t : allTransaksi) {
-            modelTabel.addRow(new Object[]{
-                t.getId(),
-                t.getNamaPelanggan(),
-                t.getNoHP(),
-                t.getLayanan(),
-                t.getBerat() + " kg",
-                "Rp " + t.getTotalHarga(),
-                t.getStatus(),
-                t.getTanggalMasukFormatted(),
-                t.getEstimasiSelesaiFormatted(),
-                t.getNamaPetugas()
+    private void switchPage(String pageName) {
+        if (pageName.equals(PAGE_DASHBOARD))
+            dashboardPanel.refreshData();
+        if (pageName.equals(PAGE_MANAGE_USER))
+            manageUserPanel.refreshData();
+        if (pageName.equals(PAGE_EDIT_LAYANAN))
+            editLayananPanel.refreshData();
+        if (pageName.equals(PAGE_LAPORAN))
+            laporanPanel.refreshData();
+
+        cardLayout.show(mainContainer, pageName);
+    }
+
+    private void openDashboard(String mode) {
+        dashboardPanel.setMode(mode);
+        switchPage(PAGE_DASHBOARD);
+    }
+
+    // --- PANEL CLASSES ---
+
+    class LoginPanel extends BackgroundPanel {
+        private JTextField txtUser;
+        private JPasswordField txtPass;
+
+        public LoginPanel() {
+            super("image/bg_login.png");
+            setLayout(null);
+
+            int centerX = 950 / 2 - 150;
+            int startY = 180;
+
+            JLabel lblTitle = new JLabel("NamaLaundry");
+            lblTitle.setFont(new Font("SansSerif", Font.BOLD, 42));
+            lblTitle.setForeground(COLOR_PRIMARY);
+            lblTitle.setHorizontalAlignment(SwingConstants.CENTER);
+            lblTitle.setBounds(0, 80, 950, 60);
+            add(lblTitle);
+
+            add(createLabel("Username", centerX, startY));
+            txtUser = createRoundedField();
+            txtUser.setBounds(centerX, startY + 25, 300, 40);
+            add(txtUser);
+
+            add(createLabel("Password", centerX, startY + 80));
+            txtPass = new JPasswordField();
+            styleField(txtPass);
+            txtPass.setBounds(centerX, startY + 105, 300, 40);
+            add(txtPass);
+
+            JLabel lReq = new JLabel("User baru? Request Access");
+            lReq.setBounds(centerX, startY + 160, 200, 20);
+            lReq.setForeground(Color.GRAY);
+            lReq.setFont(new Font("SansSerif", Font.PLAIN, 12));
+            lReq.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            lReq.addMouseListener(new MouseAdapter() {
+                public void mouseClicked(MouseEvent e) {
+                    switchPage(PAGE_REQUEST);
+                }
+            });
+            add(lReq);
+
+            RoundedButton btnLogin = new RoundedButton("Login");
+            btnLogin.setBounds(centerX + 180, startY + 155, 120, 35);
+            btnLogin.setColor(COLOR_PRIMARY);
+            btnLogin.setForeground(Color.WHITE);
+            add(btnLogin);
+
+            btnLogin.addActionListener(e -> {
+                if (UserSession.cekLogin(txtUser.getText(), new String(txtPass.getPassword()))) {
+                    txtUser.setText("");
+                    txtPass.setText("");
+                    switchPage(PAGE_MENU);
+                } else {
+                    JOptionPane.showMessageDialog(null, "Username atau Password salah!", "Login Gagal",
+                            JOptionPane.ERROR_MESSAGE);
+                }
             });
         }
-        updateTotal();
     }
 
-    // Helper Methods
-    private void addLabel(String t, int x, int y) {
-        JLabel l = new JLabel(t);
-        l.setBounds(x, y, 100, 25);
-        add(l);
-    }
-    private JTextField addInput(int x, int y, int w) {
-        JTextField t = new JTextField();
-        t.setBounds(x, y, w, 25);
-        add(t);
-        return t;
-    }
-    private void updateTotal() {
-        int total = transaksiDAO.getTotalPendapatan();
-        labelTotalPendapatan.setText("Total Pendapatan: Rp " + total);
-    }
-    private void reset() {
-        textNama.setText("");
-        textNoHP.setText("");
-        textBerat.setText("");
-        comboStatus.setSelectedIndex(0);
-        labelTotalHarga.setText("Rp 0");
-        labelTotalHarga.putClientProperty("nilai", null);
-        labelEstimasi.setText("Estimasi: -");
-        labelEstimasi.putClientProperty("estimasi", null);
-        tabelData.clearSelection();
-    }
-    private boolean validasi() {
-        if(textNama.getText().isEmpty() || labelTotalHarga.getClientProperty("nilai") == null) {
-            JOptionPane.showMessageDialog(null, "Lengkapi data!");
-            return false;
-        }
-        return true;
-    }
+    class RequestAccessPanel extends BackgroundPanel {
+        public RequestAccessPanel() {
+            super("image/bg_login.png");
+            setLayout(null);
 
-    private Transaksi findTransaksiById(int id) {
-        List<Transaksi> allTransaksi = transaksiDAO.getAllTransaksi();
-        for (Transaksi t : allTransaksi) {
-            if (t.getId() == id) return t;
-        }
-        return null;
-    }
+            JLabel lblTitle = new JLabel("REQUEST ACCESS");
+            lblTitle.setFont(new Font("SansSerif", Font.BOLD, 28));
+            lblTitle.setForeground(COLOR_PRIMARY);
+            lblTitle.setHorizontalAlignment(SwingConstants.CENTER);
+            lblTitle.setBounds(0, 60, 950, 40);
+            add(lblTitle);
 
-    // Fitur Laporan Keuangan
-    private void tampilkanLaporan() {
-        JFrame frameLaporan = new JFrame("Laporan Keuangan");
-        frameLaporan.setSize(800, 600);
-        frameLaporan.setLayout(null);
-        frameLaporan.setLocationRelativeTo(null);
+            int centerX = 950 / 2 - 175;
+            int startY = 120;
 
-        JLabel lblJudul = new JLabel("LAPORAN KEUANGAN");
-        lblJudul.setFont(new Font("Arial", Font.BOLD, 20));
-        lblJudul.setBounds(0, 20, 800, 30);
-        lblJudul.setHorizontalAlignment(SwingConstants.CENTER);
-        frameLaporan.add(lblJudul);
+            add(createLabel("Username:", centerX, startY));
+            JTextField txtUser = createRoundedField();
+            txtUser.setBounds(centerX + 120, startY - 5, 230, 35);
+            add(txtUser);
 
-        JLabel lblPeriode = new JLabel("Pilih Periode:");
-        lblPeriode.setBounds(50, 70, 100, 25);
-        frameLaporan.add(lblPeriode);
+            add(createLabel("Password:", centerX, startY + 45));
+            JPasswordField txtPass = new JPasswordField();
+            styleField(txtPass);
+            txtPass.setBounds(centerX + 120, startY + 40, 230, 35);
+            add(txtPass);
 
-        String[] periodeOpt = {"Hari Ini", "Bulan Ini", "Semua"};
-        JComboBox<String> comboPeriode = new JComboBox<>(periodeOpt);
-        comboPeriode.setBounds(150, 70, 150, 25);
-        frameLaporan.add(comboPeriode);
+            add(createLabel("Nama Lengkap:", centerX, startY + 90));
+            JTextField txtNama = createRoundedField();
+            txtNama.setBounds(centerX + 120, startY + 85, 230, 35);
+            add(txtNama);
 
-        JButton btnTampilkan = new JButton("Tampilkan");
-        btnTampilkan.setBounds(310, 70, 100, 25);
-        frameLaporan.add(btnTampilkan);
+            add(createLabel("Alasan:", centerX, startY + 135));
+            JTextArea txtAlasan = new JTextArea();
+            txtAlasan.setBorder(BorderFactory.createCompoundBorder(
+                    new RoundedBorder(15, new Color(200, 200, 200)), new EmptyBorder(5, 5, 5, 5)));
+            txtAlasan.setBackground(COLOR_INPUT);
+            txtAlasan.setLineWrap(true);
+            JScrollPane scroll = new JScrollPane(txtAlasan);
+            scroll.setBounds(centerX + 120, startY + 135, 230, 80);
+            add(scroll);
 
-        // Tabel Laporan
-        String[] colLaporan = {"ID", "Nama", "Layanan", "Total", "Status", "Tanggal"};
-        DefaultTableModel modelLaporan = new DefaultTableModel(colLaporan, 0);
-        JTable tabelLaporan = new JTable(modelLaporan);
-        JScrollPane scrollLaporan = new JScrollPane(tabelLaporan);
-        scrollLaporan.setBounds(50, 120, 700, 300);
-        frameLaporan.add(scrollLaporan);
+            RoundedButton btnKirim = new RoundedButton("Kirim Request");
+            btnKirim.setColor(COLOR_PRIMARY);
+            btnKirim.setForeground(Color.WHITE);
+            btnKirim.setBounds(centerX + 120, startY + 230, 230, 40);
+            add(btnKirim);
 
-        JLabel lblTotalLaporan = new JLabel("Total Pendapatan: Rp 0");
-        lblTotalLaporan.setBounds(50, 440, 400, 30);
-        lblTotalLaporan.setFont(new Font("Arial", Font.BOLD, 16));
-        frameLaporan.add(lblTotalLaporan);
+            RoundedButton btnBatal = new RoundedButton("Batal");
+            btnBatal.setColor(COLOR_RED);
+            btnBatal.setForeground(Color.WHITE);
+            btnBatal.setBounds(centerX + 120, startY + 280, 230, 35);
+            add(btnBatal);
 
-        JLabel lblJumlahTransaksi = new JLabel("Jumlah Transaksi: 0");
-        lblJumlahTransaksi.setBounds(50, 470, 400, 30);
-        lblJumlahTransaksi.setFont(new Font("Arial", Font.PLAIN, 14));
-        frameLaporan.add(lblJumlahTransaksi);
-
-        JButton btnTutup = new JButton("Tutup");
-        btnTutup.setBounds(650, 520, 100, 30);
-        frameLaporan.add(btnTutup);
-
-        btnTampilkan.addActionListener(e -> {
-            modelLaporan.setRowCount(0);
-            String periode = comboPeriode.getSelectedItem().toString();
-            LocalDate today = LocalDate.now();
-            List<Transaksi> transaksiList;
-            int total = 0;
-
-            if (periode.equals("Hari Ini")) {
-                transaksiList = transaksiDAO.getTransaksiByDate(today);
-            } else if (periode.equals("Bulan Ini")) {
-                transaksiList = transaksiDAO.getTransaksiByMonth(today.getYear(), today.getMonthValue());
-            } else {
-                transaksiList = transaksiDAO.getAllTransaksi();
-            }
-
-            // Hitung total dari transaksiList
-            total = 0;
-            for (Transaksi t : transaksiList) {
-                total += t.getTotalHarga();
-            }
-
-            for (Transaksi t : transaksiList) {
-                modelLaporan.addRow(new Object[]{
-                    t.getId(),
-                    t.getNamaPelanggan(),
-                    t.getLayanan(),
-                    "Rp " + t.getTotalHarga(),
-                    t.getStatus(),
-                    t.getTanggalMasukFormatted()
-                });
-            }
-
-            lblTotalLaporan.setText("Total Pendapatan: Rp " + total);
-            lblJumlahTransaksi.setText("Jumlah Transaksi: " + transaksiList.size());
-        });
-
-        btnTutup.addActionListener(e -> frameLaporan.dispose());
-
-        frameLaporan.setVisible(true);
-    }
-
-    // Fitur Manage User (Owner only)
-    private void tampilkanManageUser() {
-        JFrame frameUser = new JFrame("Kelola User");
-        frameUser.setSize(800, 600);
-        frameUser.setLayout(null);
-        frameUser.setLocationRelativeTo(null);
-
-        JLabel lblJudul = new JLabel("MANAJEMEN USER");
-        lblJudul.setFont(new Font("Arial", Font.BOLD, 20));
-        lblJudul.setBounds(0, 20, 800, 30);
-        lblJudul.setHorizontalAlignment(SwingConstants.CENTER);
-        frameUser.add(lblJudul);
-
-        // Tab Panel
-        JTabbedPane tabbedPane = new JTabbedPane();
-        tabbedPane.setBounds(20, 60, 750, 450);
-        
-        // Panel User List
-        JPanel panelUserList = createUserListPanel();
-        tabbedPane.addTab("Daftar User", panelUserList);
-        
-        // Panel Request List
-        JPanel panelRequestList = createRequestListPanel();
-        int requestPendingCount = accessRequestDAO.getPendingRequestCount();
-        String tabTitle = requestPendingCount > 0 ? "Request Access (" + requestPendingCount + ")" : "Request Access";
-        tabbedPane.addTab(tabTitle, panelRequestList);
-        
-        frameUser.add(tabbedPane);
-
-        JButton btnTutup = new JButton("Tutup");
-        btnTutup.setBounds(670, 520, 100, 30);
-        frameUser.add(btnTutup);
-        btnTutup.addActionListener(e -> frameUser.dispose());
-
-        frameUser.setVisible(true);
-    }
-
-    // Panel untuk Daftar User
-    private JPanel createUserListPanel() {
-        JPanel panel = new JPanel();
-        panel.setLayout(null);
-        panel.setPreferredSize(new Dimension(750, 450));
-
-        // Form Input
-        JLabel lblUsername = new JLabel("Username:");
-        lblUsername.setBounds(30, 20, 100, 25);
-        panel.add(lblUsername);
-        JTextField txtUsername = new JTextField();
-        txtUsername.setBounds(130, 20, 150, 25);
-        panel.add(txtUsername);
-
-        JLabel lblPassword = new JLabel("Password:");
-        lblPassword.setBounds(30, 55, 100, 25);
-        panel.add(lblPassword);
-        JPasswordField txtPassword = new JPasswordField();
-        txtPassword.setBounds(130, 55, 150, 25);
-        panel.add(txtPassword);
-
-        JLabel lblNama = new JLabel("Nama Lengkap:");
-        lblNama.setBounds(30, 90, 100, 25);
-        panel.add(lblNama);
-        JTextField txtNamaUser = new JTextField();
-        txtNamaUser.setBounds(130, 90, 150, 25);
-        panel.add(txtNamaUser);
-
-        JLabel lblRole = new JLabel("Role:");
-        lblRole.setBounds(30, 125, 100, 25);
-        panel.add(lblRole);
-        String[] roles = {"KARYAWAN", "OWNER"};
-        JComboBox<String> comboRole = new JComboBox<>(roles);
-        comboRole.setBounds(130, 125, 150, 25);
-        panel.add(comboRole);
-
-        JButton btnTambah = new JButton("Tambah");
-        btnTambah.setBounds(300, 20, 100, 30);
-        btnTambah.setBackground(Color.GREEN);
-        panel.add(btnTambah);
-
-        JButton btnHapusUser = new JButton("Hapus");
-        btnHapusUser.setBounds(300, 60, 100, 30);
-        btnHapusUser.setBackground(Color.RED);
-        btnHapusUser.setForeground(Color.WHITE);
-        panel.add(btnHapusUser);
-
-        // Tabel User
-        String[] colUser = {"Username", "Nama Lengkap", "Role"};
-        DefaultTableModel modelUser = new DefaultTableModel(colUser, 0);
-        JTable tabelUser = new JTable(modelUser);
-        JScrollPane scrollUser = new JScrollPane(tabelUser);
-        scrollUser.setBounds(30, 170, 680, 230);
-        panel.add(scrollUser);
-
-        // Load data user
-        Runnable loadUsers = () -> {
-            modelUser.setRowCount(0);
-            for (User u : UserSession.getAllUsers()) {
-                modelUser.addRow(new Object[]{u.getUsername(), u.getNamaLengkap(), u.getRole()});
-            }
-        };
-        loadUsers.run();
-
-        btnTambah.addActionListener(e -> {
-            if (txtUsername.getText().isEmpty() || txtPassword.getPassword().length == 0 || txtNamaUser.getText().isEmpty()) {
-                JOptionPane.showMessageDialog(null, "Lengkapi semua field!");
-                return;
-            }
-            UserSession.daftarBaru(
-                txtUsername.getText(),
-                new String(txtPassword.getPassword()),
-                comboRole.getSelectedItem().toString(),
-                txtNamaUser.getText()
-            );
-            JOptionPane.showMessageDialog(null, "User berhasil ditambahkan!");
-            txtUsername.setText("");
-            txtPassword.setText("");
-            txtNamaUser.setText("");
-            loadUsers.run();
-        });
-
-        btnHapusUser.addActionListener(e -> {
-            int row = tabelUser.getSelectedRow();
-            if (row >= 0) {
-                String username = modelUser.getValueAt(row, 0).toString();
-                if (username.equals(UserSession.getUsername())) {
-                    JOptionPane.showMessageDialog(null, "Tidak bisa hapus user yang sedang login!");
+            btnKirim.addActionListener(e -> {
+                if (txtUser.getText().isEmpty() || new String(txtPass.getPassword()).isEmpty()
+                        || txtNama.getText().isEmpty()) {
+                    JOptionPane.showMessageDialog(null, "Lengkapi data!");
                     return;
                 }
-                int confirm = JOptionPane.showConfirmDialog(null, "Hapus user " + username + "?", "Konfirmasi", JOptionPane.YES_NO_OPTION);
-                if (confirm == JOptionPane.YES_OPTION) {
-                    UserSession.deleteUser(username);
-                    JOptionPane.showMessageDialog(null, "User berhasil dihapus!");
-                    loadUsers.run();
+                if (userDAO.getUserByUsername(txtUser.getText()) != null) {
+                    JOptionPane.showMessageDialog(null, "Username sudah terpakai!");
+                    return;
                 }
-            } else {
-                JOptionPane.showMessageDialog(null, "Pilih user yang akan dihapus!");
-            }
-        });
+                if (accessRequestDAO.isPendingRequestExists(txtUser.getText())) {
+                    JOptionPane.showMessageDialog(null, "Request username ini masih pending!");
+                    return;
+                }
 
-        return panel;
+                AccessRequest req = new AccessRequest(txtUser.getText(), new String(txtPass.getPassword()),
+                        txtNama.getText(), txtAlasan.getText());
+                if (accessRequestDAO.insertAccessRequest(req)) {
+                    JOptionPane.showMessageDialog(null, "Request terkirim! Tunggu approval admin.");
+                    switchPage(PAGE_LOGIN);
+                } else {
+                    JOptionPane.showMessageDialog(null, "Gagal mengirim request.");
+                }
+            });
+
+            btnBatal.addActionListener(e -> switchPage(PAGE_LOGIN));
+        }
     }
 
-    // Panel untuk Request Access List
-    private JPanel createRequestListPanel() {
-        JPanel panel = new JPanel();
-        panel.setLayout(null);
-        panel.setPreferredSize(new Dimension(750, 450));
+    class MenuOperasiPanel extends BackgroundPanel {
+        public MenuOperasiPanel() {
+            super("image/bg_menu.png");
+            setLayout(null);
 
-        JLabel lblInfo = new JLabel("Daftar Request Access dari Calon User");
-        lblInfo.setBounds(10, 10, 400, 25);
-        lblInfo.setFont(new Font("Arial", Font.BOLD, 14));
-        panel.add(lblInfo);
+            JLabel lblTitle = new JLabel("Pilih Operasi");
+            lblTitle.setFont(new Font("SansSerif", Font.BOLD, 32));
+            lblTitle.setForeground(COLOR_PRIMARY);
+            lblTitle.setHorizontalAlignment(SwingConstants.CENTER);
+            lblTitle.setBounds(0, 80, 950, 50);
+            add(lblTitle);
 
-        // Tabel Request
-        String[] colRequest = {"ID", "Username", "Nama Lengkap", "Alasan", "Tanggal", "Status"};
-        DefaultTableModel modelRequest = new DefaultTableModel(colRequest, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
+            JPanel gridPanel = new JPanel(new GridLayout(2, 3, 20, 20));
+            gridPanel.setBounds(150, 180, 650, 280);
+            gridPanel.setOpaque(false);
+
+            gridPanel.add(createMenuButton("Input Transaksi Baru", e -> openDashboard("INPUT")));
+            gridPanel.add(createMenuButton("Update Transaksi", e -> openDashboard("UPDATE")));
+            gridPanel.add(createMenuButton("Hapus Transaksi", e -> openDashboard("HAPUS")));
+
+            gridPanel.add(createMenuButton("Laporan", e -> checkOwnerAndSwitch(PAGE_LAPORAN)));
+            gridPanel.add(createMenuButton("Kelola User", e -> checkOwnerAndSwitch(PAGE_MANAGE_USER)));
+            gridPanel.add(createMenuButton("Edit Layanan", e -> checkOwnerAndSwitch(PAGE_EDIT_LAYANAN)));
+
+            add(gridPanel);
+
+            RoundedButton btnLogout = new RoundedButton("Logout");
+            btnLogout.setBounds(30, 30, 100, 35);
+            btnLogout.setColor(COLOR_PRIMARY);
+            btnLogout.setForeground(Color.WHITE);
+            add(btnLogout);
+
+            btnLogout.addActionListener(e -> {
+                UserSession.logout();
+                switchPage(PAGE_LOGIN);
+            });
+        }
+
+        private void checkOwnerAndSwitch(String page) {
+            if (UserSession.isOwner()) {
+                switchPage(page);
+            } else {
+                JOptionPane.showMessageDialog(null, "Akses ditolak! Menu ini hanya untuk Owner.");
+            }
+        }
+
+        private JButton createMenuButton(String text, ActionListener action) {
+            JButton btn = new JButton("<html><center>" + text + "</center></html>");
+            btn.setFont(new Font("SansSerif", Font.BOLD, 14));
+            btn.setBackground(new Color(209, 232, 240));
+            btn.setFocusPainted(false);
+            btn.setBorder(new RoundedBorder(15, new Color(180, 200, 210)));
+            btn.addActionListener(action);
+            btn.addMouseListener(new MouseAdapter() {
+                public void mouseEntered(MouseEvent e) {
+                    btn.setBackground(new Color(190, 220, 235));
+                }
+
+                public void mouseExited(MouseEvent e) {
+                    btn.setBackground(new Color(209, 232, 240));
+                }
+            });
+            return btn;
+        }
+    }
+
+    class DashboardPanel extends BackgroundPanel {
+
+        private JTextField textNama, textNoHP, textBerat, txtTotal;
+        private JComboBox<LayananItem> comboLayanan;
+        private RoundedButton btnStatusBelum, btnStatusProses, btnStatusDone;
+        private RoundedButton btnSimpan, btnUpdate, btnHapus, btnHitung;
+        private JTable table;
+        private DefaultTableModel modelTabel;
+        private String selectedStatus = "BELUM";
+        private JLabel labelEstimasi;
+        private String currentMode = ""; // Simpan mode saat ini
+
+        public DashboardPanel() {
+            super("image/bg_dashboard.png");
+            setLayout(null);
+
+            RoundedButton btnBack = new RoundedButton("Kembali");
+            btnBack.setBounds(820, 20, 100, 35);
+            btnBack.setColor(COLOR_PRIMARY);
+            btnBack.setForeground(Color.WHITE);
+            add(btnBack);
+            btnBack.addActionListener(e -> switchPage(PAGE_MENU));
+
+            // Tabel
+            String[] col = { "ID", "Nama", "HP", "Layanan", "Berat", "Status", "Total", "Estimasi" };
+            modelTabel = new DefaultTableModel(col, 0) {
+                public boolean isCellEditable(int row, int column) {
+                    return false;
+                }
+            };
+            table = createStyledTable(modelTabel);
+            JScrollPane scroll = new JScrollPane(table);
+            scroll.setBounds(30, 80, 580, 500);
+            add(scroll);
+
+            // Form
+            int xForm = 630;
+            int wForm = 280;
+            int y = 80;
+            int gap = 60;
+
+            add(createLabel("Nama", xForm, y));
+            textNama = createRoundedInput(xForm, y + 20, wForm);
+            add(textNama);
+
+            add(createLabel("Nomor Telepon", xForm, y + gap));
+            textNoHP = createRoundedInput(xForm, y + gap + 20, wForm);
+            add(textNoHP);
+
+            add(createLabel("Layanan", xForm, y + gap * 2));
+            comboLayanan = new JComboBox<>();
+            comboLayanan.setBounds(xForm, y + gap * 2 + 20, wForm, 40);
+            comboLayanan.setBackground(COLOR_INPUT);
+            add(comboLayanan);
+
+            add(createLabel("Berat", xForm, y + gap * 3));
+            textBerat = createRoundedField();
+            textBerat.setBounds(xForm, y + gap * 3 + 20, 240, 40);
+            add(textBerat);
+            JLabel lblKg = new JLabel("kg");
+            lblKg.setBounds(xForm + 250, y + gap * 3 + 20, 30, 40);
+            add(lblKg);
+
+            // Status Buttons
+            add(createLabel("Status", xForm, y + gap * 4));
+            int yBtn = y + gap * 4 + 20;
+            btnStatusBelum = new RoundedButton("Belum");
+            btnStatusBelum.setBounds(xForm, yBtn, 85, 35);
+            btnStatusProses = new RoundedButton("Proses");
+            btnStatusProses.setBounds(xForm + 95, yBtn, 85, 35);
+            btnStatusDone = new RoundedButton("Done");
+            btnStatusDone.setBounds(xForm + 190, yBtn, 85, 35);
+            add(btnStatusBelum);
+            add(btnStatusProses);
+            add(btnStatusDone);
+            updateStatusStyle("BELUM");
+
+            // Biaya
+            add(createLabel("Biaya", xForm, y + gap * 5 + 10));
+            btnHitung = new RoundedButton("Hitung");
+            btnHitung.setColor(COLOR_PRIMARY);
+            btnHitung.setForeground(Color.WHITE);
+            btnHitung.setBounds(xForm, y + gap * 5 + 30, 90, 40);
+            add(btnHitung);
+
+            txtTotal = createRoundedField();
+            txtTotal.setText("0");
+            txtTotal.setFont(new Font("SansSerif", Font.BOLD, 14));
+            txtTotal.setHorizontalAlignment(SwingConstants.RIGHT);
+            txtTotal.setBounds(xForm + 100, y + gap * 5 + 30, 180, 40);
+            add(txtTotal);
+            txtTotal.putClientProperty("nilai", 0);
+
+            labelEstimasi = new JLabel();
+
+            // Action Buttons
+            int yAction = 540;
+            btnSimpan = new RoundedButton("Simpan");
+            btnSimpan.setColor(COLOR_PRIMARY);
+            btnSimpan.setForeground(Color.WHITE);
+            btnSimpan.setBounds(xForm + 130, yAction, 150, 45);
+            add(btnSimpan);
+            btnUpdate = new RoundedButton("Update");
+            btnUpdate.setColor(COLOR_PRIMARY);
+            btnUpdate.setForeground(Color.WHITE);
+            btnUpdate.setBounds(xForm + 130, yAction, 150, 45);
+            add(btnUpdate);
+            btnHapus = new RoundedButton("Hapus");
+            btnHapus.setColor(COLOR_RED);
+            btnHapus.setForeground(Color.WHITE);
+            btnHapus.setBounds(xForm + 130, yAction, 150, 45);
+            add(btnHapus);
+
+            // --- EVENTS ---
+            btnStatusBelum.addActionListener(e -> updateStatusStyle("BELUM"));
+            btnStatusProses.addActionListener(e -> updateStatusStyle("PROSES"));
+            btnStatusDone.addActionListener(e -> updateStatusStyle("DONE"));
+
+            btnHitung.addActionListener(e -> hitungBiaya());
+
+            btnSimpan.addActionListener(e -> {
+                if (validasi()) {
+                    showCustomDialog("Apakah anda yakin ingin\nmenyimpan transaksi?", "Simpan", () -> {
+                        simpanTransaksi();
+                    });
+                }
+            });
+
+            btnUpdate.addActionListener(e -> {
+                int row = table.getSelectedRow();
+                if (row >= 0 && validasi()) {
+                    showCustomDialog("Apakah anda yakin ingin\nmengupdate transaksi?", "Update", () -> {
+                        updateTransaksi(Integer.parseInt(table.getValueAt(row, 0).toString()));
+                    });
+                } else
+                    JOptionPane.showMessageDialog(null, "Pilih data dulu!");
+            });
+
+            btnHapus.addActionListener(e -> {
+                int row = table.getSelectedRow();
+                if (row >= 0) {
+                    showCustomDialog("Apakah anda yakin ingin\nmenghapus transaksi?", "Hapus", () -> {
+                        transaksiDAO.deleteTransaksi(Integer.parseInt(table.getValueAt(row, 0).toString()));
+                        refreshData();
+                        resetForm();
+                        JOptionPane.showMessageDialog(null, "Data Dihapus!");
+                    });
+                } else
+                    JOptionPane.showMessageDialog(null, "Pilih data dulu!");
+            });
+
+            table.addMouseListener(new MouseAdapter() {
+                public void mouseClicked(MouseEvent e) {
+                    // KLIK 2x: Deselect & Reset Form
+                    if (e.getClickCount() == 2) {
+                        table.clearSelection();
+                        resetForm();
+                        setFormEditable(true); // Unlock
+                        return;
+                    }
+
+                    // KLIK 1x: Load Data
+                    int row = table.getSelectedRow();
+                    if (row >= 0) {
+                        int id = Integer.parseInt(table.getValueAt(row, 0).toString());
+                        Transaksi t = transaksiDAO.getTransaksiById(id);
+                        if (t != null) {
+                            textNama.setText(t.getNamaPelanggan());
+                            textNoHP.setText(t.getNoHP());
+                            textBerat.setText(String.valueOf(t.getBerat()));
+                            updateStatusStyle(t.getStatus());
+                            txtTotal.setText(String.valueOf(t.getTotalHarga()));
+                            txtTotal.putClientProperty("nilai", t.getTotalHarga());
+
+                            for (int i = 0; i < comboLayanan.getItemCount(); i++) {
+                                if (comboLayanan.getItemAt(i).getNama().equals(t.getLayanan())) {
+                                    comboLayanan.setSelectedIndex(i);
+                                    break;
+                                }
+                            }
+                            labelEstimasi.putClientProperty("estimasi", t.getEstimasiSelesai());
+
+                            // LOGIC KUNCI FORM BERDASARKAN MODE
+                            if (currentMode.equals("INPUT") || currentMode.equals("HAPUS")) {
+                                setFormEditable(false); // Mode Input/Hapus: Lihat saja
+                            } else if (currentMode.equals("UPDATE")) {
+                                setFormEditable(true); // Mode Update: Boleh edit
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- HELPER UNTUK MENGUNCI FORM ---
+        private void setFormEditable(boolean editable) {
+            textNama.setEditable(editable);
+            textNoHP.setEditable(editable);
+            textBerat.setEditable(editable);
+            comboLayanan.setEnabled(editable);
+            btnStatusBelum.setEnabled(editable);
+            btnStatusProses.setEnabled(editable);
+            btnStatusDone.setEnabled(editable);
+            btnHitung.setEnabled(editable);
+        }
+
+        // --- BUSINESS LOGIC METHODS ---
+        public void refreshData() {
+            comboLayanan.removeAllItems();
+            for (LayananItem l : LayananManager.getAllLayanan())
+                comboLayanan.addItem(l);
+
+            modelTabel.setRowCount(0);
+            for (Transaksi t : transaksiDAO.getAllTransaksi()) {
+                modelTabel.addRow(new Object[] { t.getId(), t.getNamaPelanggan(), t.getNoHP(), t.getLayanan(),
+                        t.getBerat(), t.getStatus(), t.getTotalHarga(), t.getEstimasiSelesaiFormatted() });
+            }
+        }
+
+        private void hitungBiaya() {
+            try {
+                int berat = Integer.parseInt(textBerat.getText());
+                LayananItem item = (LayananItem) comboLayanan.getSelectedItem();
+                if (item == null)
+                    return;
+                int harga = LayananManager.hitungHarga(item.getNama(), berat);
+                txtTotal.setText(String.valueOf(harga));
+                txtTotal.putClientProperty("nilai", harga);
+                LocalDate estimasi = LocalDate.now().plusDays(item.getEstimasiHari());
+                labelEstimasi.putClientProperty("estimasi", estimasi);
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, "Berat harus angka!");
+            }
+        }
+
+        private void simpanTransaksi() {
+            int berat = Integer.parseInt(textBerat.getText());
+            int harga = (Integer) txtTotal.getClientProperty("nilai");
+            LayananItem item = (LayananItem) comboLayanan.getSelectedItem();
+
+            Transaksi t = new Transaksi(textNama.getText(), textNoHP.getText(), item.getNama(), berat, harga);
+            t.setStatus(selectedStatus);
+            LocalDate est = (LocalDate) labelEstimasi.getClientProperty("estimasi");
+            if (est != null)
+                t.setEstimasiSelesai(est);
+
+            transaksiDAO.insertTransaksi(t, UserSession.getUsername());
+            refreshData();
+            resetForm();
+            JOptionPane.showMessageDialog(null, "Data Berhasil Disimpan!");
+        }
+
+        private void updateTransaksi(int id) {
+            int berat = Integer.parseInt(textBerat.getText());
+            int harga = (Integer) txtTotal.getClientProperty("nilai");
+            LayananItem item = (LayananItem) comboLayanan.getSelectedItem();
+
+            Transaksi t = transaksiDAO.getTransaksiById(id);
+            t.setNamaPelanggan(textNama.getText());
+            t.setNoHP(textNoHP.getText());
+            t.setLayanan(item.getNama());
+            t.setBerat(berat);
+            t.setTotalHarga(harga);
+            t.setStatus(selectedStatus);
+            LocalDate est = (LocalDate) labelEstimasi.getClientProperty("estimasi");
+            if (est != null)
+                t.setEstimasiSelesai(est);
+
+            transaksiDAO.updateTransaksi(t, UserSession.getUsername());
+            refreshData();
+            resetForm();
+            JOptionPane.showMessageDialog(null, "Data Berhasil Diupdate!");
+        }
+
+        private void resetForm() {
+            textNama.setText("");
+            textNoHP.setText("");
+            textBerat.setText("");
+            txtTotal.setText("0");
+            updateStatusStyle("BELUM");
+            table.clearSelection();
+        }
+
+        private boolean validasi() {
+            if (textNama.getText().isEmpty() || textBerat.getText().isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Data tidak lengkap!");
                 return false;
             }
-        };
-        JTable tabelRequest = new JTable(modelRequest);
-        tabelRequest.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        tabelRequest.getColumnModel().getColumn(0).setPreferredWidth(30);
-        tabelRequest.getColumnModel().getColumn(3).setPreferredWidth(200);
-        JScrollPane scrollRequest = new JScrollPane(tabelRequest);
-        scrollRequest.setBounds(10, 45, 700, 200);
-        panel.add(scrollRequest);
-
-        // Detail Request
-        JLabel lblDetail = new JLabel("Detail Request:");
-        lblDetail.setBounds(10, 255, 150, 25);
-        lblDetail.setFont(new Font("Arial", Font.BOLD, 12));
-        panel.add(lblDetail);
-
-        JTextArea txtDetail = new JTextArea();
-        txtDetail.setEditable(false);
-        txtDetail.setLineWrap(true);
-        txtDetail.setWrapStyleWord(true);
-        txtDetail.setFont(new Font("Arial", Font.PLAIN, 11));
-        JScrollPane scrollDetail = new JScrollPane(txtDetail);
-        scrollDetail.setBounds(10, 285, 530, 100);
-        panel.add(scrollDetail);
-
-        JButton btnApprove = new JButton("✓ Approve");
-        btnApprove.setBounds(560, 285, 130, 40);
-        btnApprove.setBackground(new Color(40, 167, 69));
-        btnApprove.setForeground(Color.WHITE);
-        btnApprove.setFont(new Font("Arial", Font.BOLD, 12));
-        panel.add(btnApprove);
-
-        JButton btnDecline = new JButton("✗ Decline");
-        btnDecline.setBounds(560, 335, 130, 40);
-        btnDecline.setBackground(new Color(220, 53, 69));
-        btnDecline.setForeground(Color.WHITE);
-        btnDecline.setFont(new Font("Arial", Font.BOLD, 12));
-        panel.add(btnDecline);
-
-        // Load data request
-        Runnable loadRequests = () -> {
-            modelRequest.setRowCount(0);
-            List<AccessRequest> allRequests = accessRequestDAO.getAllAccessRequests();
-            for (AccessRequest ar : allRequests) {
-                modelRequest.addRow(new Object[]{
-                    ar.getId(),
-                    ar.getUsername(),
-                    ar.getNamaLengkap(),
-                    ar.getAlasan().length() > 50 ? ar.getAlasan().substring(0, 47) + "..." : ar.getAlasan(),
-                    ar.getTanggalRequestFormatted(),
-                    ar.getStatus()
-                });
+            if (txtTotal.getClientProperty("nilai") == null || (int) txtTotal.getClientProperty("nilai") == 0) {
+                hitungBiaya();
             }
-        };
-        loadRequests.run();
+            return true;
+        }
 
-        // Klik tabel untuk show detail
-        tabelRequest.addMouseListener(new MouseAdapter() {
-            public void mouseClicked(MouseEvent e) {
-                int row = tabelRequest.getSelectedRow();
-                if (row >= 0) {
-                    int id = (Integer) modelRequest.getValueAt(row, 0);
-                    List<AccessRequest> allRequests = accessRequestDAO.getAllAccessRequests();
-                    AccessRequest request = allRequests.stream()
-                        .filter(r -> r.getId() == id)
-                        .findFirst()
-                        .orElse(null);
-                    
-                    if (request != null) {
-                        txtDetail.setText(
-                            "Username: " + request.getUsername() + "\n" +
-                            "Nama: " + request.getNamaLengkap() + "\n" +
-                            "Tanggal: " + request.getTanggalRequestFormatted() + "\n" +
-                            "Status: " + request.getStatus() + "\n\n" +
-                            "Alasan:\n" + request.getAlasan()
-                        );
-                    }
-                }
+        public void setMode(String mode) {
+            this.currentMode = mode;
+            btnSimpan.setVisible(false);
+            btnUpdate.setVisible(false);
+            btnHapus.setVisible(false);
+
+            // Reset form setiap kali ganti mode agar bersih
+            resetForm();
+            if (table != null)
+                table.clearSelection();
+
+            if (mode.equals("INPUT")) {
+                btnSimpan.setVisible(true);
+                setFormEditable(true); // Default input harus aktif
+            } else if (mode.equals("UPDATE"))
+                btnUpdate.setVisible(true);
+            else if (mode.equals("HAPUS"))
+                btnHapus.setVisible(true);
+        }
+
+        private void updateStatusStyle(String status) {
+            selectedStatus = status;
+            resetStatusBtn(btnStatusBelum);
+            resetStatusBtn(btnStatusProses);
+            resetStatusBtn(btnStatusDone);
+            if (status.equals("BELUM")) {
+                btnStatusBelum.setColor(COLOR_RED);
+                btnStatusBelum.setForeground(Color.WHITE);
+            } else if (status.equals("PROSES")) {
+                btnStatusProses.setColor(COLOR_YELLOW);
+                btnStatusProses.setForeground(Color.BLACK);
+            } else if (status.equals("DONE")) {
+                btnStatusDone.setColor(COLOR_GREEN);
+                btnStatusDone.setForeground(Color.WHITE);
             }
-        });
+        }
 
-        btnApprove.addActionListener(e -> {
-            int row = tabelRequest.getSelectedRow();
-            if (row >= 0) {
-                int id = (Integer) modelRequest.getValueAt(row, 0);
-                List<AccessRequest> allRequests = accessRequestDAO.getAllAccessRequests();
-                AccessRequest request = allRequests.stream()
-                    .filter(r -> r.getId() == id)
-                    .findFirst()
-                    .orElse(null);
-                
-                if (request != null && request.getStatus().equals("PENDING")) {
-                    int confirm = JOptionPane.showConfirmDialog(null, 
-                        "Approve request dari " + request.getNamaLengkap() + "?", 
-                        "Konfirmasi Approve", 
-                        JOptionPane.YES_NO_OPTION);
-                    
-                    if (confirm == JOptionPane.YES_OPTION) {
-                        // Tambahkan user baru
-                        UserSession.daftarBaru(
-                            request.getUsername(),
-                            request.getPassword(),
-                            "KARYAWAN",
-                            request.getNamaLengkap()
-                        );
-                        int currentUserId = userDAO.getUserId(UserSession.getUsername());
-                        accessRequestDAO.updateAccessRequestStatus(id, "APPROVED", currentUserId);
-                        JOptionPane.showMessageDialog(null, "Request approved! User berhasil ditambahkan.");
-                        loadRequests.run();
-                        txtDetail.setText("");
-                    }
-                } else if (request != null) {
-                    JOptionPane.showMessageDialog(null, "Request ini sudah diproses!");
-                }
-            } else {
-                JOptionPane.showMessageDialog(null, "Pilih request yang akan di-approve!");
-            }
-        });
-
-        btnDecline.addActionListener(e -> {
-            int row = tabelRequest.getSelectedRow();
-            if (row >= 0) {
-                int id = (Integer) modelRequest.getValueAt(row, 0);
-                List<AccessRequest> allRequests = accessRequestDAO.getAllAccessRequests();
-                AccessRequest request = allRequests.stream()
-                    .filter(r -> r.getId() == id)
-                    .findFirst()
-                    .orElse(null);
-                
-                if (request != null && request.getStatus().equals("PENDING")) {
-                    int confirm = JOptionPane.showConfirmDialog(null, 
-                        "Decline request dari " + request.getNamaLengkap() + "?", 
-                        "Konfirmasi Decline", 
-                        JOptionPane.YES_NO_OPTION);
-                    
-                    if (confirm == JOptionPane.YES_OPTION) {
-                        int currentUserId = userDAO.getUserId(UserSession.getUsername());
-                        accessRequestDAO.updateAccessRequestStatus(id, "DECLINED", currentUserId);
-                        JOptionPane.showMessageDialog(null, "Request declined.");
-                        loadRequests.run();
-                        txtDetail.setText("");
-                    }
-                } else if (request != null) {
-                    JOptionPane.showMessageDialog(null, "Request ini sudah diproses!");
-                }
-            } else {
-                JOptionPane.showMessageDialog(null, "Pilih request yang akan di-decline!");
-            }
-        });
-
-        return panel;
-    }
-
-    // Update combo layanan dengan data terbaru
-    private void updateComboLayanan() {
-        comboLayanan.removeAllItems();
-        for (LayananItem item : LayananManager.getAllLayanan()) {
-            comboLayanan.addItem(item);
+        private void resetStatusBtn(RoundedButton btn) {
+            btn.setColor(new Color(220, 230, 235));
+            btn.setForeground(Color.GRAY);
         }
     }
 
-    // Fitur Edit Layanan (Owner only)
-    private void tampilkanEditLayanan() {
-        JFrame frameLayanan = new JFrame("Edit Layanan");
-        frameLayanan.setSize(700, 500);
-        frameLayanan.setLayout(null);
-        frameLayanan.setLocationRelativeTo(null);
+    class LaporanPanel extends BackgroundPanel {
+        private JTable table;
+        private DefaultTableModel model;
+        private JLabel lblTotal, lblCount;
+        private JComboBox<String> comboPeriode;
 
-        JLabel lblJudul = new JLabel("MANAJEMEN LAYANAN");
-        lblJudul.setFont(new Font("Arial", Font.BOLD, 20));
-        lblJudul.setBounds(0, 20, 700, 30);
-        lblJudul.setHorizontalAlignment(SwingConstants.CENTER);
-        frameLayanan.add(lblJudul);
+        public LaporanPanel() {
+            super("image/bg_dashboard.png");
+            setLayout(null);
 
-        // Form Input
-        JLabel lblNamaLayanan = new JLabel("Nama Layanan:");
-        lblNamaLayanan.setBounds(50, 70, 120, 25);
-        frameLayanan.add(lblNamaLayanan);
-        JTextField txtNamaLayanan = new JTextField();
-        txtNamaLayanan.setBounds(170, 70, 180, 25);
-        frameLayanan.add(txtNamaLayanan);
+            JLabel lblTitle = new JLabel("LAPORAN KEUANGAN");
+            lblTitle.setFont(new Font("SansSerif", Font.BOLD, 28));
+            lblTitle.setForeground(COLOR_PRIMARY);
+            lblTitle.setBounds(30, 30, 400, 40);
+            add(lblTitle);
 
-        JLabel lblHarga = new JLabel("Harga per Kg:");
-        lblHarga.setBounds(50, 105, 120, 25);
-        frameLayanan.add(lblHarga);
-        JTextField txtHarga = new JTextField();
-        txtHarga.setBounds(170, 105, 180, 25);
-        frameLayanan.add(txtHarga);
+            RoundedButton btnBack = new RoundedButton("Kembali");
+            btnBack.setBounds(820, 30, 100, 35);
+            btnBack.setColor(COLOR_PRIMARY);
+            btnBack.setForeground(Color.WHITE);
+            add(btnBack);
+            btnBack.addActionListener(e -> switchPage(PAGE_MENU));
 
-        JLabel lblEstimasi = new JLabel("Estimasi (hari):");
-        lblEstimasi.setBounds(50, 140, 120, 25);
-        frameLayanan.add(lblEstimasi);
-        JTextField txtEstimasi = new JTextField();
-        txtEstimasi.setBounds(170, 140, 180, 25);
-        frameLayanan.add(txtEstimasi);
+            add(createLabel("Pilih Periode:", 30, 90));
+            comboPeriode = new JComboBox<>(new String[] { "Hari Ini", "Bulan Ini", "Semua" });
+            comboPeriode.setBounds(130, 90, 150, 30);
+            comboPeriode.setBackground(COLOR_INPUT);
+            add(comboPeriode);
 
-        JButton btnTambah = new JButton("Tambah");
-        btnTambah.setBounds(370, 70, 100, 30);
-        btnTambah.setBackground(Color.GREEN);
-        frameLayanan.add(btnTambah);
+            RoundedButton btnShow = new RoundedButton("Tampilkan");
+            btnShow.setColor(COLOR_PRIMARY);
+            btnShow.setForeground(Color.WHITE);
+            btnShow.setBounds(300, 90, 120, 30);
+            add(btnShow);
 
-        JButton btnUpdate = new JButton("Update");
-        btnUpdate.setBounds(370, 105, 100, 30);
-        btnUpdate.setBackground(Color.YELLOW);
-        frameLayanan.add(btnUpdate);
+            String[] col = { "ID", "Tanggal", "Nama Pelanggan", "Layanan", "Status", "Total" };
+            model = new DefaultTableModel(col, 0);
+            table = createStyledTable(model);
+            JScrollPane scroll = new JScrollPane(table);
+            scroll.setBounds(30, 140, 890, 350);
+            add(scroll);
 
-        JButton btnHapus = new JButton("Hapus");
-        btnHapus.setBounds(370, 140, 100, 30);
-        btnHapus.setBackground(Color.RED);
-        btnHapus.setForeground(Color.WHITE);
-        frameLayanan.add(btnHapus);
+            lblTotal = new JLabel("Total Pendapatan: Rp 0");
+            lblTotal.setFont(new Font("SansSerif", Font.BOLD, 18));
+            lblTotal.setForeground(COLOR_TEXT);
+            lblTotal.setBounds(30, 510, 400, 30);
+            add(lblTotal);
 
-        // Tabel Layanan
-        String[] colLayanan = {"Nama Layanan", "Harga per Kg", "Estimasi (hari)"};
-        DefaultTableModel modelLayanan = new DefaultTableModel(colLayanan, 0);
-        JTable tabelLayanan = new JTable(modelLayanan);
-        JScrollPane scrollLayanan = new JScrollPane(tabelLayanan);
-        scrollLayanan.setBounds(50, 190, 600, 200);
-        frameLayanan.add(scrollLayanan);
+            lblCount = new JLabel("Jumlah Transaksi: 0");
+            lblCount.setFont(new Font("SansSerif", Font.PLAIN, 14));
+            lblCount.setForeground(Color.GRAY);
+            lblCount.setBounds(30, 540, 400, 30);
+            add(lblCount);
 
-        JButton btnTutup = new JButton("Tutup");
-        btnTutup.setBounds(550, 410, 100, 30);
-        frameLayanan.add(btnTutup);
+            btnShow.addActionListener(e -> refreshData());
+        }
 
-        // Load data layanan
-        Runnable loadLayanan = () -> {
-            modelLayanan.setRowCount(0);
-            for (LayananItem item : LayananManager.getAllLayanan()) {
-                modelLayanan.addRow(new Object[]{
-                    item.getNama(),
-                    "Rp " + item.getHargaPerKg(),
-                    item.getEstimasiHari() + " hari"
-                });
+        public void refreshData() {
+            model.setRowCount(0);
+            String periode = comboPeriode.getSelectedItem().toString();
+            LocalDate today = LocalDate.now();
+            List<Transaksi> list;
+
+            if (periode.equals("Hari Ini"))
+                list = transaksiDAO.getTransaksiByDate(today);
+            else if (periode.equals("Bulan Ini"))
+                list = transaksiDAO.getTransaksiByMonth(today.getYear(), today.getMonthValue());
+            else
+                list = transaksiDAO.getAllTransaksi();
+
+            int total = 0;
+            for (Transaksi t : list) {
+                total += t.getTotalHarga();
+                model.addRow(new Object[] { t.getId(), t.getTanggalMasukFormatted(), t.getNamaPelanggan(),
+                        t.getLayanan(), t.getStatus(), t.getTotalHarga() });
             }
-        };
-        loadLayanan.run();
+            lblTotal.setText("Total Pendapatan: Rp " + total);
+            lblCount.setText("Jumlah Transaksi: " + list.size());
+        }
+    }
 
-        // Klik tabel untuk load data ke form
-        tabelLayanan.addMouseListener(new MouseAdapter() {
-            public void mouseClicked(MouseEvent e) {
-                int row = tabelLayanan.getSelectedRow();
-                if (row >= 0) {
-                    String namaLayanan = modelLayanan.getValueAt(row, 0).toString();
-                    LayananItem item = LayananManager.getLayananByNama(namaLayanan);
-                    if (item != null) {
-                        txtNamaLayanan.setText(item.getNama());
-                        txtHarga.setText(String.valueOf(item.getHargaPerKg()));
-                        txtEstimasi.setText(String.valueOf(item.getEstimasiHari()));
+    class ManageUserPanel extends BackgroundPanel {
+        private DefaultTableModel modelUser, modelReq;
+        private JTextField tUser, tName;
+        private JPasswordField tPass;
+        private JComboBox<String> cRole;
+        private JTextArea txtDetail;
+        private JTable tableUser, tableReq;
+
+        public ManageUserPanel() {
+            super("image/bg_dashboard.png");
+            setLayout(null);
+
+            JLabel lblTitle = new JLabel("KELOLA USER");
+            lblTitle.setFont(new Font("SansSerif", Font.BOLD, 28));
+            lblTitle.setForeground(COLOR_PRIMARY);
+            lblTitle.setBounds(30, 30, 400, 40);
+            add(lblTitle);
+
+            RoundedButton btnBack = new RoundedButton("Kembali");
+            btnBack.setBounds(820, 30, 100, 35);
+            btnBack.setColor(COLOR_PRIMARY);
+            btnBack.setForeground(Color.WHITE);
+            add(btnBack);
+            btnBack.addActionListener(e -> switchPage(PAGE_MENU));
+
+            JTabbedPane tabbedPane = new JTabbedPane();
+            tabbedPane.setBounds(30, 80, 890, 500);
+            tabbedPane.setFont(new Font("SansSerif", Font.BOLD, 14));
+
+            JPanel panelUser = new JPanel(null);
+            panelUser.setBackground(new Color(245, 250, 255));
+            JLabel lUser = new JLabel("Username:");
+            lUser.setBounds(20, 20, 100, 25);
+            panelUser.add(lUser);
+            tUser = createRoundedField();
+            tUser.setBounds(100, 20, 150, 30);
+            panelUser.add(tUser);
+
+            JLabel lPass = new JLabel("Password:");
+            lPass.setBounds(20, 60, 100, 25);
+            panelUser.add(lPass);
+            tPass = new JPasswordField();
+            styleField(tPass);
+            tPass.setBounds(100, 60, 150, 30);
+            panelUser.add(tPass);
+
+            JLabel lName = new JLabel("Nama:");
+            lName.setBounds(270, 20, 100, 25);
+            panelUser.add(lName);
+            tName = createRoundedField();
+            tName.setBounds(330, 20, 150, 30);
+            panelUser.add(tName);
+
+            JLabel lRole = new JLabel("Role:");
+            lRole.setBounds(270, 60, 100, 25);
+            panelUser.add(lRole);
+            cRole = new JComboBox<>(new String[] { "KARYAWAN", "OWNER" });
+            cRole.setBounds(330, 60, 150, 30);
+            panelUser.add(cRole);
+
+            RoundedButton btnAdd = new RoundedButton("Tambah");
+            btnAdd.setColor(COLOR_GREEN);
+            btnAdd.setForeground(Color.WHITE);
+            btnAdd.setBounds(520, 20, 100, 30);
+            panelUser.add(btnAdd);
+            btnAdd.addActionListener(e -> {
+                UserSession.daftarBaru(tUser.getText(), new String(tPass.getPassword()),
+                        cRole.getSelectedItem().toString(), tName.getText());
+                refreshData();
+                JOptionPane.showMessageDialog(null, "User ditambah!");
+            });
+
+            RoundedButton btnDel = new RoundedButton("Hapus");
+            btnDel.setColor(COLOR_RED);
+            btnDel.setForeground(Color.WHITE);
+            btnDel.setBounds(520, 60, 100, 30);
+            panelUser.add(btnDel);
+            btnDel.addActionListener(e -> {
+                int r = tableUser.getSelectedRow();
+                if (r >= 0) {
+                    UserSession.deleteUser(tableUser.getValueAt(r, 0).toString());
+                    refreshData();
+                    JOptionPane.showMessageDialog(null, "User dihapus!");
+                }
+            });
+
+            String[] colU = { "Username", "Nama Lengkap", "Role" };
+            modelUser = new DefaultTableModel(colU, 0);
+            tableUser = createStyledTable(modelUser);
+            JScrollPane scrollU = new JScrollPane(tableUser);
+            scrollU.setBounds(20, 110, 840, 330);
+            panelUser.add(scrollU);
+
+            JPanel panelReq = new JPanel(null);
+            panelReq.setBackground(new Color(245, 250, 255));
+            String[] colR = { "ID", "Username", "Nama", "Alasan", "Status" };
+            modelReq = new DefaultTableModel(colR, 0);
+            tableReq = createStyledTable(modelReq);
+            JScrollPane scrollR = new JScrollPane(tableReq);
+            scrollR.setBounds(20, 20, 840, 250);
+            panelReq.add(scrollR);
+
+            txtDetail = new JTextArea();
+            txtDetail.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+            txtDetail.setBounds(20, 290, 500, 100);
+            panelReq.add(txtDetail);
+
+            RoundedButton btnApp = new RoundedButton("Approve");
+            btnApp.setColor(COLOR_GREEN);
+            btnApp.setForeground(Color.WHITE);
+            btnApp.setBounds(540, 290, 120, 40);
+            panelReq.add(btnApp);
+            btnApp.addActionListener(e -> processRequest("APPROVED"));
+
+            RoundedButton btnDec = new RoundedButton("Decline");
+            btnDec.setColor(COLOR_RED);
+            btnDec.setForeground(Color.WHITE);
+            btnDec.setBounds(680, 290, 120, 40);
+            panelReq.add(btnDec);
+            btnDec.addActionListener(e -> processRequest("DECLINED"));
+
+            tableReq.addMouseListener(new MouseAdapter() {
+                public void mouseClicked(MouseEvent e) {
+                    int r = tableReq.getSelectedRow();
+                    if (r >= 0)
+                        txtDetail.setText("Alasan: " + tableReq.getValueAt(r, 3));
+                }
+            });
+
+            tabbedPane.addTab("Daftar User", panelUser);
+            tabbedPane.addTab("Request Access", panelReq);
+            add(tabbedPane);
+        }
+
+        public void refreshData() {
+            modelUser.setRowCount(0);
+            for (User u : UserSession.getAllUsers())
+                modelUser.addRow(new Object[] { u.getUsername(), u.getNamaLengkap(), u.getRole() });
+
+            modelReq.setRowCount(0);
+            for (AccessRequest ar : accessRequestDAO.getAccessRequestsByStatus("PENDING"))
+                modelReq.addRow(new Object[] { ar.getId(), ar.getUsername(), ar.getNamaLengkap(), ar.getAlasan(),
+                        ar.getStatus() });
+        }
+
+        private void processRequest(String status) {
+            int r = tableReq.getSelectedRow();
+            if (r >= 0) {
+                int id = Integer.parseInt(tableReq.getValueAt(r, 0).toString());
+                int adminId = userDAO.getUserId(UserSession.getUsername());
+
+                if (status.equals("APPROVED")) {
+                    String username = tableReq.getValueAt(r, 1).toString();
+                    String nama = tableReq.getValueAt(r, 2).toString();
+                    AccessRequest fullReq = accessRequestDAO.getAccessRequestById(id);
+                    UserSession.daftarBaru(username, fullReq.getPassword(), "KARYAWAN", nama);
+                }
+
+                accessRequestDAO.updateAccessRequestStatus(id, status, adminId);
+                refreshData();
+                JOptionPane.showMessageDialog(null, "Request " + status);
+            }
+        }
+    }
+
+    class EditLayananPanel extends BackgroundPanel {
+        private JTextField tNama, tHarga, tEst;
+        private DefaultTableModel model;
+        private JTable table;
+
+        public EditLayananPanel() {
+            super("image/bg_dashboard.png");
+            setLayout(null);
+
+            JLabel lblTitle = new JLabel("EDIT LAYANAN");
+            lblTitle.setFont(new Font("SansSerif", Font.BOLD, 28));
+            lblTitle.setForeground(COLOR_PRIMARY);
+            lblTitle.setBounds(30, 30, 400, 40);
+            add(lblTitle);
+
+            RoundedButton btnBack = new RoundedButton("Kembali");
+            btnBack.setBounds(820, 30, 100, 35);
+            btnBack.setColor(COLOR_PRIMARY);
+            btnBack.setForeground(Color.WHITE);
+            add(btnBack);
+            btnBack.addActionListener(e -> switchPage(PAGE_MENU));
+
+            int x = 30;
+            int y = 90;
+            add(createLabel("Nama Layanan:", x, y));
+            tNama = createRoundedField();
+            tNama.setBounds(150, y, 200, 35);
+            add(tNama);
+            add(createLabel("Harga / Kg:", x, y + 45));
+            tHarga = createRoundedField();
+            tHarga.setBounds(150, y + 45, 200, 35);
+            add(tHarga);
+            add(createLabel("Estimasi (Hari):", x, y + 90));
+            tEst = createRoundedField();
+            tEst.setBounds(150, y + 90, 200, 35);
+            add(tEst);
+
+            int bx = 380;
+            RoundedButton btnAdd = new RoundedButton("Tambah");
+            btnAdd.setColor(COLOR_GREEN);
+            btnAdd.setForeground(Color.WHITE);
+            btnAdd.setBounds(bx, y, 100, 35);
+            add(btnAdd);
+            btnAdd.addActionListener(e -> {
+                LayananManager.addLayanan(tNama.getText(), Integer.parseInt(tHarga.getText()),
+                        Integer.parseInt(tEst.getText()));
+                refreshData();
+                JOptionPane.showMessageDialog(null, "Layanan Ditambah");
+            });
+
+            RoundedButton btnUpd = new RoundedButton("Update");
+            btnUpd.setColor(COLOR_YELLOW);
+            btnUpd.setForeground(Color.BLACK);
+            btnUpd.setBounds(bx, y + 45, 100, 35);
+            add(btnUpd);
+            btnUpd.addActionListener(e -> {
+                int r = table.getSelectedRow();
+                if (r >= 0) {
+                    LayananManager.updateLayanan(table.getValueAt(r, 0).toString(), tNama.getText(),
+                            Integer.parseInt(tHarga.getText()), Integer.parseInt(tEst.getText()));
+                    refreshData();
+                    JOptionPane.showMessageDialog(null, "Layanan Diupdate");
+                }
+            });
+
+            RoundedButton btnDel = new RoundedButton("Hapus");
+            btnDel.setColor(COLOR_RED);
+            btnDel.setForeground(Color.WHITE);
+            btnDel.setBounds(bx, y + 90, 100, 35);
+            add(btnDel);
+            btnDel.addActionListener(e -> {
+                int r = table.getSelectedRow();
+                if (r >= 0) {
+                    LayananManager.deleteLayanan(table.getValueAt(r, 0).toString());
+                    refreshData();
+                    JOptionPane.showMessageDialog(null, "Layanan Dihapus");
+                }
+            });
+
+            String[] col = { "Nama Layanan", "Harga", "Estimasi" };
+            model = new DefaultTableModel(col, 0);
+            table = createStyledTable(model);
+            JScrollPane scroll = new JScrollPane(table);
+            scroll.setBounds(30, 250, 890, 330);
+            add(scroll);
+
+            table.addMouseListener(new MouseAdapter() {
+                public void mouseClicked(MouseEvent e) {
+                    int r = table.getSelectedRow();
+                    if (r >= 0) {
+                        tNama.setText(table.getValueAt(r, 0).toString());
+                        tHarga.setText(table.getValueAt(r, 1).toString());
+                        tEst.setText(table.getValueAt(r, 2).toString());
                     }
                 }
-            }
-        });
+            });
+        }
 
-        btnTambah.addActionListener(e -> {
-            try {
-                if (txtNamaLayanan.getText().isEmpty() || txtHarga.getText().isEmpty() || txtEstimasi.getText().isEmpty()) {
-                    JOptionPane.showMessageDialog(null, "Lengkapi semua field!");
-                    return;
-                }
-                
-                String nama = txtNamaLayanan.getText();
-                int harga = Integer.parseInt(txtHarga.getText());
-                int estimasi = Integer.parseInt(txtEstimasi.getText());
-                
-                // Cek duplikat nama
-                if (LayananManager.getLayananByNama(nama) != null) {
-                    JOptionPane.showMessageDialog(null, "Layanan dengan nama tersebut sudah ada!");
-                    return;
-                }
-                
-                LayananManager.addLayanan(nama, harga, estimasi);
-                JOptionPane.showMessageDialog(null, "Layanan berhasil ditambahkan!");
-                txtNamaLayanan.setText("");
-                txtHarga.setText("");
-                txtEstimasi.setText("");
-                loadLayanan.run();
-                updateComboLayanan();
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(null, "Harga dan estimasi harus berupa angka!");
+        public void refreshData() {
+            model.setRowCount(0);
+            for (LayananItem l : LayananManager.getAllLayanan()) {
+                model.addRow(new Object[] { l.getNama(), l.getHargaPerKg(), l.getEstimasiHari() });
             }
-        });
+        }
+    }
 
-        btnUpdate.addActionListener(e -> {
-            try {
-                int row = tabelLayanan.getSelectedRow();
-                if (row < 0) {
-                    JOptionPane.showMessageDialog(null, "Pilih layanan yang akan diupdate!");
-                    return;
-                }
-                
-                if (txtNamaLayanan.getText().isEmpty() || txtHarga.getText().isEmpty() || txtEstimasi.getText().isEmpty()) {
-                    JOptionPane.showMessageDialog(null, "Lengkapi semua field!");
-                    return;
-                }
-                
-                String namaLama = modelLayanan.getValueAt(row, 0).toString();
-                String namaBaru = txtNamaLayanan.getText();
-                int harga = Integer.parseInt(txtHarga.getText());
-                int estimasi = Integer.parseInt(txtEstimasi.getText());
-                
-                // Jika nama berubah, cek duplikat
-                if (!namaLama.equals(namaBaru) && LayananManager.getLayananByNama(namaBaru) != null) {
-                    JOptionPane.showMessageDialog(null, "Layanan dengan nama tersebut sudah ada!");
-                    return;
-                }
-                
-                LayananManager.updateLayanan(namaLama, namaBaru, harga, estimasi);
-                JOptionPane.showMessageDialog(null, "Layanan berhasil diupdate!");
-                txtNamaLayanan.setText("");
-                txtHarga.setText("");
-                txtEstimasi.setText("");
-                loadLayanan.run();
-                updateComboLayanan();
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(null, "Harga dan estimasi harus berupa angka!");
+    // --- UTILITIES ---
+
+    private JLabel createLabel(String t, int x, int y) {
+        JLabel l = new JLabel(t);
+        l.setBounds(x, y, 200, 20);
+        l.setFont(new Font("SansSerif", Font.BOLD, 13));
+        l.setForeground(COLOR_TEXT);
+        return l;
+    }
+
+    private JTextField createRoundedField() {
+        JTextField tf = new JTextField();
+        styleField(tf);
+        return tf;
+    }
+
+    private JTextField createRoundedInput(int x, int y, int w) {
+        JTextField t = createRoundedField();
+        t.setBounds(x, y, w, 40);
+        return t;
+    }
+
+    private void styleField(JTextField tf) {
+        tf.setBackground(COLOR_INPUT);
+        tf.setBorder(BorderFactory.createCompoundBorder(
+                new RoundedBorder(15, new Color(200, 200, 200)), new EmptyBorder(0, 10, 0, 10)));
+        tf.setFont(new Font("SansSerif", Font.PLAIN, 14));
+    }
+
+    private JTable createStyledTable(DefaultTableModel model) {
+        JTable table = new JTable(model);
+        table.setRowHeight(35);
+        table.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        table.setShowVerticalLines(false);
+        table.setSelectionBackground(new Color(200, 220, 230));
+
+        JTableHeader header = table.getTableHeader();
+        header.setBackground(new Color(210, 225, 235));
+        header.setFont(new Font("SansSerif", Font.BOLD, 12));
+        header.setPreferredSize(new Dimension(0, 40));
+        return table;
+    }
+
+    private void showCustomDialog(String message, String actionText, Runnable action) {
+        JDialog dialog = new JDialog(AplikasiLaundry.this, true);
+        dialog.setUndecorated(true);
+        dialog.setSize(400, 250);
+        dialog.setLocationRelativeTo(null);
+        dialog.setBackground(new Color(0, 0, 0, 0));
+
+        JPanel panel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(Color.WHITE);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+                g2.setColor(new Color(200, 200, 200));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 20, 20);
             }
-        });
+        };
+        panel.setLayout(null);
 
-        btnHapus.addActionListener(e -> {
-            int row = tabelLayanan.getSelectedRow();
-            if (row >= 0) {
-                String namaLayanan = modelLayanan.getValueAt(row, 0).toString();
-                int confirm = JOptionPane.showConfirmDialog(null, "Hapus layanan " + namaLayanan + "?", "Konfirmasi", JOptionPane.YES_NO_OPTION);
-                if (confirm == JOptionPane.YES_OPTION) {
-                    LayananManager.deleteLayanan(namaLayanan);
-                    JOptionPane.showMessageDialog(null, "Layanan berhasil dihapus!");
-                    txtNamaLayanan.setText("");
-                    txtHarga.setText("");
-                    txtEstimasi.setText("");
-                    loadLayanan.run();
-                    updateComboLayanan();
+        JLabel lblMsg = new JLabel("<html><center>" + message.replace("\n", "<br>") + "</center></html>");
+        lblMsg.setFont(new Font("SansSerif", Font.PLAIN, 18));
+        lblMsg.setHorizontalAlignment(SwingConstants.CENTER);
+        lblMsg.setBounds(20, 30, 360, 100);
+        panel.add(lblMsg);
+
+        RoundedButton btnCancel = new RoundedButton("Batalkan");
+        btnCancel.setColor(COLOR_PRIMARY);
+        btnCancel.setForeground(Color.WHITE);
+        btnCancel.setBounds(40, 160, 150, 45);
+        btnCancel.addActionListener(e -> dialog.dispose());
+        panel.add(btnCancel);
+
+        RoundedButton btnAction = new RoundedButton(actionText);
+        btnAction.setColor(COLOR_PRIMARY);
+        btnAction.setForeground(Color.WHITE);
+        btnAction.setBounds(210, 160, 150, 45);
+        btnAction.addActionListener(e -> {
+            dialog.dispose();
+            action.run();
+        });
+        panel.add(btnAction);
+
+        dialog.add(panel);
+        dialog.setVisible(true);
+    }
+
+    class RoundedButton extends JButton {
+        private Color color = new Color(220, 220, 220);
+        private int radius = 15;
+        private boolean isHovered = false;
+        private boolean isPressed = false;
+
+        public RoundedButton(String text) {
+            super(text);
+            setContentAreaFilled(false);
+            setFocusPainted(false);
+            setBorderPainted(false);
+            setFont(new Font("SansSerif", Font.BOLD, 13));
+            addMouseListener(new MouseAdapter() {
+                public void mouseEntered(MouseEvent e) {
+                    isHovered = true;
+                    repaint();
                 }
+
+                public void mouseExited(MouseEvent e) {
+                    isHovered = false;
+                    repaint();
+                }
+
+                public void mousePressed(MouseEvent e) {
+                    isPressed = true;
+                    repaint();
+                }
+
+                public void mouseReleased(MouseEvent e) {
+                    isPressed = false;
+                    repaint();
+                }
+            });
+        }
+
+        public void setColor(Color c) {
+            this.color = c;
+            repaint();
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+
+            Graphics2D g2 = (Graphics2D) g;
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            if (!isEnabled()) {
+                g2.setColor(new Color(230, 230, 230));
             } else {
-                JOptionPane.showMessageDialog(null, "Pilih layanan yang akan dihapus!");
+                Color baseColor = isPressed ? color.darker() : color;
+                g2.setColor(baseColor);
             }
-        });
 
-        btnTutup.addActionListener(e -> frameLayanan.dispose());
+            // Gambar Background Bulat
+            g2.fillRoundRect(0, 0, getWidth(), getHeight(), radius, radius);
 
-        frameLayanan.setVisible(true);
+            // Effect Hover
+            if (isHovered && isEnabled()) {
+                g2.setColor(new Color(255, 255, 255, 150));
+                g2.setStroke(new BasicStroke(2));
+                g2.drawRoundRect(2, 2, getWidth() - 4, getHeight() - 4, radius, radius);
+            }
+
+            super.paintComponent(g);
+        }
+    }
+
+    class BackgroundPanel extends JPanel {
+        private Image bgImage;
+
+        public BackgroundPanel(String fileName) {
+            try {
+                bgImage = new ImageIcon(fileName).getImage();
+            } catch (Exception e) {
+            }
+        }
+
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            if (bgImage != null && bgImage.getWidth(null) > 0)
+                g.drawImage(bgImage, 0, 0, getWidth(), getHeight(), this);
+            else {
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setPaint(new GradientPaint(0, 0, Color.WHITE, 0, getHeight(), new Color(200, 230, 250)));
+                g2.fillRect(0, 0, getWidth(), getHeight());
+            }
+        }
+    }
+
+    class RoundedBorder implements Border {
+        private int r;
+        private Color c;
+
+        RoundedBorder(int r, Color c) {
+            this.r = r;
+            this.c = c;
+        }
+
+        public Insets getBorderInsets(Component cmp) {
+            return new Insets(r / 2, r / 2, r / 2, r / 2);
+        }
+
+        public boolean isBorderOpaque() {
+            return true;
+        }
+
+        public void paintBorder(Component cmp, Graphics g, int x, int y, int w, int h) {
+            Graphics2D g2 = (Graphics2D) g;
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(c);
+            g2.drawRoundRect(x, y, w - 1, h - 1, r, r);
+        }
     }
 }
